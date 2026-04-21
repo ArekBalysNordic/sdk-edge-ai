@@ -1,0 +1,18 @@
+sample:
+  description: Continuous DMIC audio pipeline that waits for the "Okay Nordic" wakeword, then runs nRF Edge AI keyword spotting in a 7-second active window and returns to wakeword mode on timeout.
+  name: Wakeword gated KeyWord Spotting (KWS) application
+
+common:
+  sysbuild: true
+  build_only: true
+  tags:
+    - axon
+    - axon_audio_models
+    - axon_wakeword_kws
+
+tests:
+  applications.wakeword_kws.zdebug:
+    platform_allow:
+      - nrf54lm20dk/nrf54lm20b/cpuapp
+    integration_platforms:
+      - nrf54lm20dk/nrf54lm20b/cpuapp
