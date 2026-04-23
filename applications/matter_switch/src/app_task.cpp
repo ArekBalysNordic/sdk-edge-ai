@@ -44,18 +44,26 @@ void ButtonEventHandler(Nrf::ButtonState state, Nrf::ButtonMask hasChanged)
 		Nrf::Matter::GetSwitch().InitiateActionSwitch(::Switch::Action::Toggle);
 	}
 }
-} // namespace
 
-void matter_event_handler(const chip::DeviceLayer::ChipDeviceEvent *event, intptr_t arg)
+void matter_app_event_handler(const chip::DeviceLayer::ChipDeviceEvent *event, intptr_t arg)
 {
+	(void)arg;
+
 	switch (event->Type) {
 	case chip::DeviceLayer::DeviceEventType::kServerReady:
+		// Enable Edge AI task when Matter server is ready
+		EdgeAITask::Instance().Enable();
 		k_sem_give(&gMatterStartedSem);
+		break;
+	case chip::DeviceLayer::DeviceEventType::kCHIPoBLEConnectionEstablished:
+		// Disable Edge AI task when commissioning is in progress
+		EdgeAITask::Instance().Disable();
 		break;
 	default:
 		break;
 	}
 }
+} // namespace
 
 CHIP_ERROR AppTask::Init()
 {
@@ -70,6 +78,7 @@ CHIP_ERROR AppTask::Init()
 		return CHIP_ERROR_INCORRECT_STATE;
 	}
 
+	ReturnErrorOnFailure(Nrf::Matter::RegisterEventHandler(matter_app_event_handler, 0));
 	ReturnErrorOnFailure(
 		Nrf::Matter::RegisterEventHandler(Nrf::Board::DefaultMatterEventHandler, 0));
 
@@ -80,11 +89,9 @@ CHIP_ERROR AppTask::Init()
 
 CHIP_ERROR AppTask::StartApp()
 {
-	Nrf::Matter::RegisterEventHandler(matter_event_handler, 0);
 	ReturnErrorOnFailure(Init());
 
 	ReturnErrorOnFailure(EdgeAITask::Instance().Start());
-	EdgeAITask::Instance().Enable();
 
 	while (true) {
 		Nrf::DispatchNextTask();

@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.20.0)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(matter_switch)
+project(matter_ambient_sensing)
 
 # Enable GNU STD support.
 include(${ZEPHYR_CONNECTEDHOMEIP_MODULE_DIR}/config/nrfconnect/app/enable-gnu-std.cmake)
@@ -27,8 +27,6 @@ set(MATTER_EDGEAI_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../matter_common)
 
 target_include_directories(app PRIVATE
   src
-  src/nrf_edgeai_generated
-  src/switch
   src/edgeAI
   ${MATTER_EDGEAI_COMMON_DIR}
   ${ZAP_PARENT_DIR}
@@ -41,20 +39,15 @@ target_sources(app PRIVATE
   src/app_task.cpp
   src/nrf_edgeai_task.cpp
 
-  src/switch/switch.cpp
+  src/ambient_sensing.cpp
 
-  src/wakeword.c
-  src/keyword.c
-  src/models/wakeword/nrf_edgeai_generated/nrf_edgeai_user_model.c
-  src/models/kws/nrf_edgeai_generated/nrf_edgeai_user_model.c
-
-  ${MATTER_EDGEAI_COMMON_DIR}/dimming_effect.cpp
   ${MATTER_EDGEAI_COMMON_DIR}/dmic.c
+  ${MATTER_EDGEAI_COMMON_DIR}/dimming_effect.cpp
 )
 
-target_sources_ifdef(CONFIG_SWITCH_SHELL app PRIVATE src/switch/shell_commands.cpp)
-target_sources_ifdef(CONFIG_GENERIC_SWITCH app PRIVATE src/switch/generic_switch.cpp)
-target_sources_ifdef(CONFIG_LIGHT_SWITCH app PRIVATE src/switch/light_switch.cpp)
-target_sources_ifdef(CONFIG_LIGHT_SWITCH app PRIVATE ${ZEPHYR_NRF_MODULE_DIR}/samples/matter/common/src/binding/binding_handler.cpp)
+target_sources_ifdef(CONFIG_AMBIENT_SENSING_MODEL_SNORING app PRIVATE src/models/snoring/nrf_edgeai_user_model.c)
+target_sources_ifdef(CONFIG_AMBIENT_SENSING_MODEL_DOG_BARKING app PRIVATE src/models/dog_barking/nrf_edgeai_user_model.c)
+target_sources_ifdef(CONFIG_AMBIENT_SENSING_MODEL_CAT_MEOWING app PRIVATE src/models/cat_meowing/nrf_edgeai_user_model.c)
+target_sources_ifdef(CONFIG_AMBIENT_SENSING_MODEL_BABY_CRYING app PRIVATE src/models/baby_crying/nrf_edgeai_user_model.c)
 
 ncs_configure_data_model()

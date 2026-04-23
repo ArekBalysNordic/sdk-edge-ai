@@ -4,21 +4,23 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
+#include <errno.h>
+
 #include <zephyr/audio/dmic.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
-#include <zephyr/drivers/pwm.h>
 #include <zephyr/kernel.h>
-#include <zephyr/sys/util.h>
 
 #include "board/board.h"
 #include "app/task_executor.h"
-#include "edgeAI/keyword.h"
-#include "edgeAI/wakeword.h"
+
+#include "platform/PlatformManager.h"
 #include "pwm/pwm_device.h"
+#include "dimming_effect.h"
 
 #include "dmic.h"
 #include "wakeword.h"
+#include "keyword.h"
 #include "nrf_edgeai_task.h"
 #include "app_task.h"
 
@@ -46,12 +48,13 @@ enum detection_state_e {
 };
 
 const struct device *const dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
-
+void switch_thread_fn();
+K_THREAD_DEFINE(switch_thread_id, CONFIG_SWITCH_THREAD_STACK_SIZE, switch_thread_fn, NULL, NULL,
+		NULL, CONFIG_SWITCH_THREAD_PRIORITY, K_FP_REGS, SYS_FOREVER_MS);
 void switch_thread_fn()
 {
 	void *audio_buffer;
 	size_t audio_buffer_size;
-	bool ww_detected;
 	const int32_t read_timeout = 100;
 	int err = 0;
 	uint32_t kws_start_time = 0;
@@ -72,6 +75,16 @@ void switch_thread_fn()
 		LOG_ERR("Failed to initialize keyword detection");
 		return;
 	}
+#if defined(CONFIG_PWM) && DT_HAS_ALIAS(pwm_led0) && DT_HAS_ALIAS(pwm_led1) &&                     \
+	DT_HAS_ALIAS(pwm_led2) && DT_HAS_ALIAS(pwm_led3)
+	{
+		Nrf::DimmingEffect::Config dim_cfg;
+
+		dim_cfg.effect_timeout_s = CONFIG_KW_DETECTION_TIMEOUT_S;
+		dim_cfg.blink_pairs_multiplier = 3;
+		(void)Nrf::DimmingEffect::Init(dim_cfg);
+	}
+#endif
 
 	LOG_INF("Edge AI Switch initialization completed, Waiting for Matter to Start");
 	k_sem_take(&gMatterStartedSem, K_FOREVER);
@@ -85,8 +98,16 @@ void switch_thread_fn()
 	LOG_INF("\n\nWaiting for wakeword...\n\n");
 
 	while (true) {
+		bool ww_detected = false;
+
 		err = dmic_read(dmic_dev, 0, &audio_buffer, &audio_buffer_size, read_timeout);
 		if (err != 0) {
+			if (err == -EAGAIN || err == -EBUSY) {
+				k_yield();
+				continue;
+			}
+			LOG_WRN("DMIC read failed (err %d)", err);
+			k_sleep(K_MSEC(1));
 			continue;
 		}
 
@@ -96,8 +117,6 @@ void switch_thread_fn()
 		}
 		switch (app_state) {
 		case WAITING_FOR_WAKEWORD: {
-			static uint8_t test = 0;
-			LOG_INF("%u    \r", test++);
 			/* ww_process feeds the model and returns the DMIC block to the slab. */
 			err = ww_process(reinterpret_cast<uint8_t *>(audio_buffer),
 					 audio_buffer_size / DMIC_SAMPLE_BYTES, &ww_detected);
@@ -142,8 +161,7 @@ void switch_thread_fn()
 
 			switch (class_detected) {
 			case KEYWORD_OFF: {
-
-				Nrf::PostTask([] {
+				SystemLayer().ScheduleLambda([] {
 					LOG_INF("Turning light off");
 
 					Nrf::Matter::GetSwitch().InitiateActionSwitch(
@@ -152,8 +170,7 @@ void switch_thread_fn()
 				break;
 			}
 			case KEYWORD_ON: {
-
-				Nrf::PostTask([] {
+				SystemLayer().ScheduleLambda([] {
 					LOG_INF("Turning light on");
 					Nrf::Matter::GetSwitch().InitiateActionSwitch(
 						::Switch::Action::On);
@@ -161,8 +178,7 @@ void switch_thread_fn()
 				break;
 			}
 			case KEYWORD_SWITCH: {
-
-				Nrf::PostTask([] {
+				SystemLayer().ScheduleLambda([] {
 					LOG_INF("Toggling the light");
 
 					Nrf::Matter::GetSwitch().InitiateActionSwitch(
@@ -174,6 +190,7 @@ void switch_thread_fn()
 				LOG_DBG("Not a valid keyword (class %u)", class_detected);
 			}
 			}
+			k_thread_suspend(switch_thread_id);
 			ww_reset_model();
 			app_state = WAITING_FOR_WAKEWORD;
 			LOG_INF("\n\nWaiting for wakeword...\n\n");
@@ -183,12 +200,22 @@ void switch_thread_fn()
 	}
 }
 
-K_THREAD_DEFINE(switch_thread_id, CONFIG_SWITCH_THREAD_STACK_SIZE, switch_thread_fn, NULL, NULL,
-		NULL, CONFIG_SWITCH_THREAD_PRIORITY, K_FP_REGS, SYS_FOREVER_MS);
 } // namespace
 
 CHIP_ERROR EdgeAITask::Start()
 {
 	k_thread_start(switch_thread_id);
 	return CHIP_NO_ERROR;
+}
+
+void EdgeAITask::Enable()
+{
+	LOG_INF("\n\nWaiting for wakeword...\n\n");
+	enabled.store(true, std::memory_order_release);
+}
+
+void EdgeAITask::Disable()
+{
+	enabled.store(false, std::memory_order_release);
+	LOG_INF("\n\nEdge AI listening disabled\n\n");
 }

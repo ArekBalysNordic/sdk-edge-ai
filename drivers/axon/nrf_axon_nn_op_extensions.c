@@ -226,12 +226,6 @@ nrf_axon_result_e nrf_axon_nn_op_extension_sigmoid(uint16_t argc,
 	return NRF_AXON_RESULT_SUCCESS;
 }
 
-nrf_axon_result_e
-nrf_axon_nn_op_extension_sigmoid_v2(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE *args)
-{
-	return nrf_axon_nn_op_extension_sigmoid(argc, args);
-}
-
 nrf_axon_result_e nrf_axon_nn_op_extension_tanh(uint16_t argc,
 						NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE *args)
 {
@@ -355,4 +349,10 @@ nrf_axon_result_e nrf_axon_nn_op_extension_reshape(uint16_t argc,
 		}
 	}
 	return NRF_AXON_RESULT_SUCCESS;
+}
+
+nrf_axon_result_e
+nrf_axon_nn_op_extension_sigmoid_v2(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE *args)
+{
+	return nrf_axon_nn_op_extension_sigmoid(argc, args);
 }

@@ -6,17 +6,15 @@
 
 #pragma once
 
-#include <atomic>
-
 #include <platform/CHIPDeviceLayer.h>
-#include "switch.h"
+#include <atomic>
 
 class EdgeAITask
 {
-      public:
+public:
 	/**
 	 * @brief Get the singleton instance of EdgeAITask.
-	 *
+	 * 
 	 * @return Reference to the EdgeAITask instance.
 	 */
 	static EdgeAITask &Instance()
@@ -27,7 +25,7 @@ class EdgeAITask
 
 	/**
 	 * @brief Start the Edge AI task thread.
-	 *
+	 * 
 	 * @return CHIP_ERROR indicating success or failure.
 	 */
 	CHIP_ERROR Start();
@@ -44,7 +42,7 @@ class EdgeAITask
 
 	/**
 	 * @brief Check if the Edge AI task is enabled.
-	 *
+	 * 
 	 * @return true if enabled, false otherwise.
 	 */
 	bool IsEnabled() const
@@ -52,8 +50,7 @@ class EdgeAITask
 		return enabled.load(std::memory_order_acquire);
 	}
 
-      private:
-	/** @brief Flag indicating whether the Edge AI task is enabled (Matter thread vs. Edge AI
-	 * thread). */
+private:
+	/** @brief Flag indicating whether the Edge AI task is enabled. */
 	std::atomic<bool> enabled{false};
 };
