@@ -5,6 +5,8 @@
  */
 
 #include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #include <zephyr/audio/dmic.h>
 #include <zephyr/device.h>
@@ -84,7 +86,51 @@ CHIP_ERROR RequestOccupancyMatterUpdate(uint8_t occupancyRaw)
 	return DeviceLayer::PlatformMgr().ScheduleWork(OccupancySensingChipWorkerHandler,
 						       static_cast<intptr_t>(occupancyRaw));
 }
+#endif /* CONFIG_USE_OCCUPANCY_SENSOR_INSTEAD_OF_AMBIENT_SENSING */
+
+/**
+ * @brief Common post-detection notification (LED effect + optional Matter
+ *        occupancy update). Used by both the single-model and multi-model
+ *        code paths.
+ */
+void NotifyDetection(const char *model_name)
+{
+	LOG_INF("%s detected", model_name);
+
+	Nrf::PostTask([] {
+#if defined(CONFIG_PWM) && DT_HAS_ALIAS(pwm_led0) && DT_HAS_ALIAS(pwm_led1) &&                     \
+	DT_HAS_ALIAS(pwm_led2) && DT_HAS_ALIAS(pwm_led3)
+		Nrf::DimmingEffect::Start();
 #endif
+	});
+
+#ifdef CONFIG_USE_OCCUPANCY_SENSOR_INSTEAD_OF_AMBIENT_SENSING
+	if (RequestOccupancyMatterUpdate(1) != CHIP_NO_ERROR) {
+		LOG_ERR("Failed to schedule occupancy update to Matter stack");
+	}
+#endif
+}
+
+void InitDimmingEffect()
+{
+#if defined(CONFIG_PWM) && DT_HAS_ALIAS(pwm_led0) && DT_HAS_ALIAS(pwm_led1) &&                     \
+	DT_HAS_ALIAS(pwm_led2) && DT_HAS_ALIAS(pwm_led3)
+	Nrf::DimmingEffect::Config dim_cfg;
+	dim_cfg.effect_timeout_s = 5;
+	dim_cfg.blink_pairs_multiplier = 3;
+	(void)Nrf::DimmingEffect::Init(
+		dim_cfg,
+		[](void *) {
+#ifdef CONFIG_USE_OCCUPANCY_SENSOR_INSTEAD_OF_AMBIENT_SENSING
+			if (RequestOccupancyMatterUpdate(0) != CHIP_NO_ERROR) {
+				LOG_ERR("Failed to schedule occupancy clear to Matter "
+					"stack");
+			}
+#endif
+		},
+		nullptr);
+#endif
+}
 
 void ai_thread_fn()
 {
@@ -94,47 +140,69 @@ void ai_thread_fn()
 	int err = 0;
 
 	LOG_INF("Starting Ambient Sensing Application...");
-	LOG_INF("Model postprocessing adjustable parameters:");
 
 	nrf_edgeai_rt_version_t libver = nrf_edgeai_runtime_version();
-	LOG_INF("Nordic Edge AI Library version: %d.%d.%d", libver.field.major, libver.field.minor,
-		libver.field.patch);
+	LOG_INF("Nordic Edge AI Library version: %d.%d.%d", libver.field.major,
+		libver.field.minor, libver.field.patch);
 
-	nrf_edgeai_t *p_model = get_ambient_sensing_model();
+#ifdef CONFIG_AMBIENT_SENSING_MODEL_ALL
+	/*
+	 * Multi-model mode: run every built-in model from this single thread.
+	 *
+	 * Why single-threaded:
+	 *   - All AXON models share the global `nrf_axon_interlayer_buffer`,
+	 *     so `nrf_edgeai_run_inference` must be serialised. Worker-thread
+	 *     parallelism therefore yields no extra throughput on this SoC.
+	 *   - Using per-worker audio queues with drop-oldest semantics meant
+	 *     each model lost *different* 10 ms blocks, corrupting its own
+	 *     NN input window independently and delaying the rolling
+	 *     detectors (visible as recognition lag in the previous design).
+	 *   - Feeding every model from the same stream keeps all models in
+	 *     lockstep: if the CPU ever falls behind, the DMIC driver drops
+	 *     one block at the producer side and every model loses the same
+	 *     block. That matches the single-model behaviour exactly, just
+	 *     repeated N times per frame.
+	 */
+	const size_t model_count = Nrf::AmbientSensing::kAllModelsCount;
+	nrf_edgeai_t *models[Nrf::AmbientSensing::kMaxAllModels];
+	Nrf::AmbientSensing::ModelRuntimeState states[Nrf::AmbientSensing::kMaxAllModels]{};
 
-	// Initialize ambient sensing model
-	nrf_edgeai_err_t res = nrf_edgeai_init(p_model);
-	if (res != NRF_EDGEAI_ERR_SUCCESS) {
-		LOG_ERR("Failed to initialize Edge AI model %s, error code: %d",
-			Nrf::AmbientSensing::getModelName(), res);
+	if (model_count > Nrf::AmbientSensing::kMaxAllModels) {
+		LOG_ERR("Too many ambient sensing models: %u", static_cast<unsigned>(model_count));
 		return;
 	}
+
+	for (size_t i = 0; i < model_count; ++i) {
+		models[i] = Nrf::AmbientSensing::kAllModels[i].get_model();
+		nrf_edgeai_err_t ires = nrf_edgeai_init(models[i]);
+		if (ires != NRF_EDGEAI_ERR_SUCCESS) {
+			LOG_ERR("Failed to initialize %s, error %d",
+				Nrf::AmbientSensing::kAllModels[i].name, ires);
+			return;
+		}
+		LOG_INF("  - %s initialised (threshold=%0.3f, N-in-row=%u)",
+			Nrf::AmbientSensing::kAllModels[i].name,
+			static_cast<double>(
+				Nrf::AmbientSensing::kAllModels[i].confidence_threshold),
+			static_cast<unsigned>(
+				Nrf::AmbientSensing::kAllModels[i].prediction_num_in_row));
+	}
+#else
+	nrf_edgeai_t *p_model = get_ambient_sensing_model();
+	nrf_edgeai_err_t ires = nrf_edgeai_init(p_model);
+	if (ires != NRF_EDGEAI_ERR_SUCCESS) {
+		LOG_ERR("Failed to initialize Edge AI model %s, error code: %d",
+			Nrf::AmbientSensing::getModelName(), ires);
+		return;
+	}
+#endif /* CONFIG_AMBIENT_SENSING_MODEL_ALL */
 
 	if (dmic_init()) {
 		LOG_ERR("Failed to initialize DMIC");
 		return;
 	}
 
-#if defined(CONFIG_PWM) && DT_HAS_ALIAS(pwm_led0) && DT_HAS_ALIAS(pwm_led1) &&                     \
-	DT_HAS_ALIAS(pwm_led2) && DT_HAS_ALIAS(pwm_led3)
-	{
-		Nrf::DimmingEffect::Config dim_cfg;
-
-		dim_cfg.effect_timeout_s = 5;
-		dim_cfg.blink_pairs_multiplier = 3;
-		(void)Nrf::DimmingEffect::Init(
-			dim_cfg,
-			[](void *) {
-#ifdef CONFIG_USE_OCCUPANCY_SENSOR_INSTEAD_OF_AMBIENT_SENSING
-				if (RequestOccupancyMatterUpdate(0) != CHIP_NO_ERROR) {
-					LOG_ERR("Failed to schedule occupancy clear to Matter "
-						"stack");
-				}
-#endif
-			},
-			nullptr);
-	}
-#endif
+	InitDimmingEffect();
 
 	LOG_INF("Edge AI initialization completed");
 
@@ -146,7 +214,6 @@ void ai_thread_fn()
 	while (true) {
 		err = dmic_read(dmic_dev, 0, &audio_buffer, &audio_buffer_size, read_timeout);
 		if (err != 0) {
-			/* No data yet or driver busy: avoid a tight loop and log spam. */
 			if (err == -EAGAIN || err == -EBUSY) {
 				k_yield();
 				continue;
@@ -161,40 +228,70 @@ void ai_thread_fn()
 			continue;
 		}
 
-		size_t samples_num = audio_buffer_size / DMIC_SAMPLE_BYTES;
+		const size_t samples_num = audio_buffer_size / DMIC_SAMPLE_BYTES;
 
-		// Feed audio data to the model dsp pipeline and
-		// waiting for internal buffers to be filled with enough data for feature extraction
-		res = nrf_edgeai_feed_inputs(p_model, audio_buffer, samples_num);
+#ifdef CONFIG_AMBIENT_SENSING_MODEL_ALL
+		/*
+		 * Feed the same 10 ms block into every model's DSP pipeline and
+		 * run inference immediately. AXON is intrinsically serialised,
+		 * but because this loop is single-threaded we pay neither
+		 * mutex nor queueing overhead.
+		 */
+#ifdef CONFIG_AMBIENT_SENSING_ALL_LOG_TIMING
+		const int64_t frame_start_us = k_uptime_ticks();
+#endif
+		for (size_t i = 0; i < model_count; ++i) {
+			const auto &cfg = Nrf::AmbientSensing::kAllModels[i];
+			nrf_edgeai_t *m = models[i];
+
+			nrf_edgeai_err_t res = nrf_edgeai_feed_inputs(m, audio_buffer, samples_num);
+			if (res != NRF_EDGEAI_ERR_SUCCESS) {
+				continue;
+			}
+
+#ifdef CONFIG_AMBIENT_SENSING_ALL_LOG_TIMING
+			const int64_t t0 = k_uptime_ticks();
+#endif
+			res = nrf_edgeai_run_inference(m);
+#ifdef CONFIG_AMBIENT_SENSING_ALL_LOG_TIMING
+			const int64_t t1 = k_uptime_ticks();
+			LOG_DBG("  [%s] inference %u us", cfg.name,
+				static_cast<unsigned>(
+					k_ticks_to_us_near32(static_cast<uint32_t>(t1 - t0))));
+#endif
+			if (res != NRF_EDGEAI_ERR_SUCCESS) {
+				continue;
+			}
+
+			if (Nrf::AmbientSensing::process(cfg, states[i], m)) {
+				NotifyDetection(cfg.name);
+			}
+		}
+#ifdef CONFIG_AMBIENT_SENSING_ALL_LOG_TIMING
+		const int64_t frame_end_us = k_uptime_ticks();
+		LOG_DBG("Frame total %u us",
+			static_cast<unsigned>(k_ticks_to_us_near32(
+				static_cast<uint32_t>(frame_end_us - frame_start_us))));
+#endif
+
+		free_dmic_buffer(audio_buffer);
+#else /* !CONFIG_AMBIENT_SENSING_MODEL_ALL */
+		nrf_edgeai_err_t res = nrf_edgeai_feed_inputs(p_model, audio_buffer, samples_num);
 		free_dmic_buffer(audio_buffer);
 
 		if (res != NRF_EDGEAI_ERR_SUCCESS) {
 			continue;
 		}
 
-		// Run feature extraction and model inference
 		res = nrf_edgeai_run_inference(p_model);
-
 		if (res != NRF_EDGEAI_ERR_SUCCESS) {
 			continue;
 		}
 
-		// Run postprocessing on the model output to determine if snoring is detected based
-		// on the model inference results
 		if (Nrf::AmbientSensing::process(p_model)) {
-			LOG_INF("%s detected", Nrf::AmbientSensing::getModelName());
-			Nrf::PostTask([] {
-#if defined(CONFIG_PWM) && DT_HAS_ALIAS(pwm_led0) && DT_HAS_ALIAS(pwm_led1) &&                     \
-	DT_HAS_ALIAS(pwm_led2) && DT_HAS_ALIAS(pwm_led3)
-				Nrf::DimmingEffect::Start();
-#endif
-			});
-#ifdef CONFIG_USE_OCCUPANCY_SENSOR_INSTEAD_OF_AMBIENT_SENSING
-			if (RequestOccupancyMatterUpdate(1) != CHIP_NO_ERROR) {
-				LOG_ERR("Failed to schedule occupancy update to Matter stack");
-			}
-#endif
+			NotifyDetection(Nrf::AmbientSensing::getModelName());
 		}
+#endif /* CONFIG_AMBIENT_SENSING_MODEL_ALL */
 	}
 }
 
@@ -210,7 +307,11 @@ CHIP_ERROR EdgeAITask::Start()
 
 void EdgeAITask::Enable()
 {
+#ifdef CONFIG_AMBIENT_SENSING_MODEL_ALL
+	LOG_INF("\n\nWaiting for any registered ambient sound source...\n\n");
+#else
 	LOG_INF("\n\nWaiting for %s source...\n\n", Nrf::AmbientSensing::getModelName());
+#endif
 	enabled.store(true, std::memory_order_release);
 }
 

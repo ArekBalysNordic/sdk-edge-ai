@@ -50,4 +50,14 @@ target_sources_ifdef(CONFIG_AMBIENT_SENSING_MODEL_DOG_BARKING app PRIVATE src/mo
 target_sources_ifdef(CONFIG_AMBIENT_SENSING_MODEL_CAT_MEOWING app PRIVATE src/models/cat_meowing/nrf_edgeai_user_model.c)
 target_sources_ifdef(CONFIG_AMBIENT_SENSING_MODEL_BABY_CRYING app PRIVATE src/models/baby_crying/nrf_edgeai_user_model.c)
 
+# Multi-threaded mode: compile every built-in model at once.
+if(CONFIG_AMBIENT_SENSING_MODEL_ALL)
+  target_sources(app PRIVATE
+    src/models/snoring/nrf_edgeai_user_model.c
+    src/models/dog_barking/nrf_edgeai_user_model.c
+    src/models/cat_meowing/nrf_edgeai_user_model.c
+    src/models/baby_crying/nrf_edgeai_user_model.c
+  )
+endif()
+
 ncs_configure_data_model()

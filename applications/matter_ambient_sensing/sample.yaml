@@ -74,3 +74,19 @@ tests:
       - nrf54lm20dk/nrf54lm20b/cpuapp
     integration_platforms:
       - nrf54lm20dk/nrf54lm20b/cpuapp
+  applications.matter_ambient_sensing.all_models_dmic_adafruit:
+    extra_args:
+      - CONFIG_AMBIENT_SENSING_MODEL_ALL=y
+      - EXTRA_DTC_OVERLAY_FILE=boards/dmic_adafruit.dtsi
+    platform_allow:
+      - nrf54lm20dk/nrf54lm20b/cpuapp
+    integration_platforms:
+      - nrf54lm20dk/nrf54lm20b/cpuapp
+  applications.matter_ambient_sensing.all_models_dmic_low_power:
+    extra_args:
+      - CONFIG_AMBIENT_SENSING_MODEL_ALL=y
+      - EXTRA_DTC_OVERLAY_FILE=boards/dmic_low_power.dtsi
+    platform_allow:
+      - nrf54lm20dk/nrf54lm20b/cpuapp
+    integration_platforms:
+      - nrf54lm20dk/nrf54lm20b/cpuapp

@@ -34,12 +34,34 @@ config AMBIENT_SENSING_MODEL_CAT_MEOWING
 	help
 	  Use the Meowing model for ambient sensing.
 
+config AMBIENT_SENSING_MODEL_ALL
+	bool "All models (multi-threaded)"
+	help
+	  Compile every built-in ambient sensing model (snoring, baby crying,
+	  dog barking, cat meowing) and run them concurrently. A dedicated
+	  DMIC reader thread broadcasts captured audio to a per-model worker
+	  thread. Because all AXON models share a global interlayer buffer,
+	  the actual inference call is serialised with a mutex, while DSP
+	  feature extraction and post-processing run in parallel.
+
 config AMBIENT_SENSING_MODEL_CUSTOM
 	bool "Custom model"
 	help
 	  Use a custom model for ambient sensing.
 
 endchoice
+
+if AMBIENT_SENSING_MODEL_ALL
+
+config AMBIENT_SENSING_ALL_LOG_TIMING
+	bool "Log per-model inference timing"
+	help
+	  When enabled, the AI thread logs per-model inference time and the
+	  total per-frame processing time at debug level. Useful for
+	  confirming that the CPU keeps up with the 10 ms DMIC cadence when
+	  running all built-in models back to back.
+
+endif # AMBIENT_SENSING_MODEL_ALL
 
 config AMBIENT_SENSING_MODEL_CUSTOM_PATH
 	string "Path to the custom model"
