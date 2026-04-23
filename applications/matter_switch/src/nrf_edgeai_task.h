@@ -11,7 +11,7 @@
 
 class EdgeAITask
 {
-public:
+      public:
 	static EdgeAITask &Instance()
 	{
 		static EdgeAITask sEdgeAITask;
@@ -33,6 +33,6 @@ public:
 		return enabled;
 	}
 
-private:
+      private:
 	bool enabled{false};
 };

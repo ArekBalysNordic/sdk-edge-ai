@@ -13,6 +13,8 @@
 
 #include "board/board.h"
 #include "app/task_executor.h"
+#include "edgeAI/keyword.h"
+#include "edgeAI/wakeword.h"
 #include "pwm/pwm_device.h"
 
 #include "dmic.h"
@@ -27,6 +29,8 @@
 
 LOG_MODULE_DECLARE(app, CONFIG_CHIP_APP_LOG_LEVEL);
 
+#define KEYWORD_SPOTTING_TIMEOUT_MS 3000
+
 using namespace ::chip;
 using namespace ::chip::app;
 using namespace ::chip::app::Clusters;
@@ -35,127 +39,13 @@ using namespace ::chip::DeviceLayer;
 
 namespace
 {
-const struct device *const dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
 
-#if defined(CONFIG_PWM) && DT_HAS_ALIAS(pwm_led0) && DT_HAS_ALIAS(pwm_led1) && DT_HAS_ALIAS(pwm_led2) &&            \
-	DT_HAS_ALIAS(pwm_led3)
-
-/* Same level range as Matter light_bulb sample (pwm_device maps to duty). */
-constexpr uint8_t kKwPwmMinLevel = 0;
-constexpr uint8_t kKwPwmMaxLevel = 254;
-/** Work queue tick for the wakeword PWM effect (smaller = smoother / more CPU). */
-constexpr int kKwFxTickMs = 20;
-
-static const struct pwm_dt_spec s_kw_pwm_specs[] = {
-	PWM_DT_SPEC_GET(DT_ALIAS(pwm_led0)),
-	PWM_DT_SPEC_GET(DT_ALIAS(pwm_led1)),
-	PWM_DT_SPEC_GET(DT_ALIAS(pwm_led2)),
-	PWM_DT_SPEC_GET(DT_ALIAS(pwm_led3)),
+enum detection_state_e {
+	WAITING_FOR_WAKEWORD,
+	WAITING_FOR_KEYWORDS,
 };
 
-static Nrf::PWMDevice s_kw_pwm_devices[ARRAY_SIZE(s_kw_pwm_specs)];
-
-static k_timer s_kw_effect_timer;
-static k_work_delayable s_kw_dim_work;
-static int s_elapsed_ms;
-
-/** Number of full bright -> dim -> bright cycles packed into the timeout window. */
-static int KwBlinkPairCount()
-{
-	const int s = CONFIG_KW_DETECTION_TIMEOUT_S;
-
-	/* ~3 pairs per second of timeout (e.g. 10 s -> 30 fast “blinks” with dim ramps). */
-	return MAX(10, 3 * s);
-}
-
-static void KwInitPwmDevicesAndTurnOn()
-{
-	for (unsigned i = 0; i < ARRAY_SIZE(s_kw_pwm_devices); i++) {
-		Nrf::PWMDevice &dev = s_kw_pwm_devices[i];
-
-		if (dev.Init(&s_kw_pwm_specs[i], kKwPwmMinLevel, kKwPwmMaxLevel, kKwPwmMaxLevel) != 0) {
-			LOG_ERR("PWMDevice init failed for channel %u", i);
-			continue;
-		}
-		dev.SetCallbacks(nullptr, nullptr);
-		(void)dev.InitiateAction(Nrf::PWMDevice::ON_ACTION, 0, nullptr);
-	}
-}
-
-static void KwSuppressAllPwmOutputs()
-{
-	for (Nrf::PWMDevice &dev : s_kw_pwm_devices) {
-		dev.SuppressOutput();
-	}
-}
-
-static void KwDimStepWorkHandler(struct k_work *work)
-{
-	ARG_UNUSED(work);
-
-	const int total_ms = CONFIG_KW_DETECTION_TIMEOUT_S * 1000;
-	const int num_pairs = KwBlinkPairCount();
-	const int pair_ms = MAX(2 * kKwFxTickMs, total_ms / num_pairs);
-	const int half_ms = MAX(kKwFxTickMs, pair_ms / 2);
-
-	const int e = MIN(s_elapsed_ms, total_ms - 1);
-	const int pos = (pair_ms > 0) ? (e % pair_ms) : 0;
-	uint8_t level;
-
-	if (pos < half_ms) {
-		/* Fade down: full brightness toward off. */
-		level = static_cast<uint8_t>((static_cast<uint32_t>(kKwPwmMaxLevel) * (half_ms - pos)) /
-					      static_cast<unsigned>(half_ms));
-	} else {
-		/* Fade up: off toward full brightness. */
-		const int up = pair_ms - half_ms;
-
-		if (up < 1) {
-			level = kKwPwmMaxLevel;
-		} else {
-			const int pos2 = pos - half_ms;
-
-			level = static_cast<uint8_t>((static_cast<uint32_t>(kKwPwmMaxLevel) *
-							static_cast<unsigned>(pos2)) /
-						       static_cast<unsigned>(up));
-		}
-	}
-
-	for (Nrf::PWMDevice &dev : s_kw_pwm_devices) {
-		uint8_t value = level;
-
-		(void)dev.InitiateAction(Nrf::PWMDevice::LEVEL_ACTION, 0, &value);
-	}
-
-	s_elapsed_ms += kKwFxTickMs;
-	if (s_elapsed_ms < total_ms) {
-		(void)k_work_reschedule(&s_kw_dim_work, K_MSEC(kKwFxTickMs));
-	} else {
-		KwSuppressAllPwmOutputs();
-		Nrf::GetBoard().RunLedStateHandler();
-	}
-}
-
-static void KwStartDimmingFromWakewordEffect()
-{
-	(void)k_work_cancel_delayable(&s_kw_dim_work);
-
-	s_elapsed_ms = 0;
-
-	Nrf::GetBoard().ForEachLED([](Nrf::LEDWidget &led) { led.Set(false); });
-
-	KwInitPwmDevicesAndTurnOn();
-
-	(void)k_work_schedule(&s_kw_dim_work, K_NO_WAIT);
-}
-
-static void KwEffectTimerCallback(k_timer *timer)
-{
-	ARG_UNUSED(timer);
-	Nrf::PostTask([] { KwStartDimmingFromWakewordEffect(); });
-}
-
-#endif /* CONFIG_PWM && pwm_led DT aliases */
+const struct device *const dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
 
 void switch_thread_fn()
 {
@@ -164,6 +54,9 @@ void switch_thread_fn()
 	bool ww_detected;
 	const int32_t read_timeout = 100;
 	int err = 0;
+	uint32_t kws_start_time = 0;
+	detection_state_e app_state = WAITING_FOR_WAKEWORD;
+	uint16_t class_detected = KEYWORD_OTHER;
 
 	if (dmic_init()) {
 		LOG_ERR("Failed to initialize DMIC");
@@ -175,13 +68,14 @@ void switch_thread_fn()
 		return;
 	}
 
-#if defined(CONFIG_PWM) && DT_HAS_ALIAS(pwm_led0) && DT_HAS_ALIAS(pwm_led1) && DT_HAS_ALIAS(pwm_led2) &&            \
-	DT_HAS_ALIAS(pwm_led3)
-	k_timer_init(&s_kw_effect_timer, KwEffectTimerCallback, nullptr);
-	k_work_init_delayable(&s_kw_dim_work, KwDimStepWorkHandler);
-#endif
+	if (kw_init() != 0) {
+		LOG_ERR("Failed to initialize keyword detection");
+		return;
+	}
 
-	LOG_INF("Edge AI Switch initialization completed");
+	LOG_INF("Edge AI Switch initialization completed, Waiting for Matter to Start");
+	k_sem_take(&gMatterStartedSem, K_FOREVER);
+	LOG_INF("Matter server is ready, starting Edge AI capture");
 
 	if (dmic_trigger(dmic_dev, DMIC_TRIGGER_START) < 0) {
 		LOG_ERR("Failed to start DMIC");
@@ -200,30 +94,91 @@ void switch_thread_fn()
 			free_dmic_buffer(audio_buffer);
 			continue;
 		}
+		switch (app_state) {
+		case WAITING_FOR_WAKEWORD: {
+			static uint8_t test = 0;
+			LOG_INF("%u    \r", test++);
+			/* ww_process feeds the model and returns the DMIC block to the slab. */
+			err = ww_process(reinterpret_cast<uint8_t *>(audio_buffer),
+					 audio_buffer_size / DMIC_SAMPLE_BYTES, &ww_detected);
+			if (err == -EBUSY) {
+				continue;
+			} else if (err < 0) {
+				LOG_ERR("Wakeword detection failed (err %d)", err);
+			}
 
-		/* ww_process feeds the model and returns the DMIC block to the slab. */
-		err = ww_process(reinterpret_cast<uint8_t *>(audio_buffer),
-				 audio_buffer_size / DMIC_SAMPLE_BYTES, &ww_detected);
-		if (err == -EBUSY) {
-			continue;
-		} else if (err < 0) {
-			LOG_ERR("Wakeword detection failed (err %d)", err);
+			if (ww_detected) {
+
+				LOG_INF("wakeword detected, Looking for keywords");
+
+				kw_reset_model();
+				kws_start_time = k_uptime_get_32();
+				app_state = WAITING_FOR_KEYWORDS;
+			}
+			break;
 		}
+		case WAITING_FOR_KEYWORDS: {
+			if (k_uptime_get_32() - kws_start_time > KEYWORD_SPOTTING_TIMEOUT_MS) {
+				ww_reset_model();
+				app_state = WAITING_FOR_WAKEWORD;
+				LOG_INF("\n\nWaiting for wakeword...\n\n");
+				break;
+			}
 
-		if (ww_detected) {
-#if defined(CONFIG_PWM) && DT_HAS_ALIAS(pwm_led0) && DT_HAS_ALIAS(pwm_led1) && DT_HAS_ALIAS(pwm_led2) &&            \
-	DT_HAS_ALIAS(pwm_led3)
-			k_timer_stop(&s_kw_effect_timer);
-			k_timer_start(&s_kw_effect_timer, K_NO_WAIT, K_NO_WAIT);
-#endif
-			Nrf::PostTask([] {
-				LOG_INF("wakeword detected");
-				bool value_invert =
-					!Nrf::GetBoard().GetLED(Nrf::DeviceLeds::LED2).GetState();
-				Nrf::GetBoard().GetLED(Nrf::DeviceLeds::LED2).Set(value_invert);
+			const int kws =
+				kw_process(reinterpret_cast<uint8_t *>(audio_buffer),
+					   audio_buffer_size / DMIC_SAMPLE_BYTES, &class_detected);
+			if (kws == -EBUSY) {
+				continue;
+			}
+			if (kws < 0) {
+				LOG_ERR("Keyword detection failed (err %d)", kws);
+				break;
+			}
+			/* 0: keep listening; 1: full phrase recognized. */
+			if (kws == 0) {
+				break;
+			}
 
-				Nrf::Matter::GetSwitch().InitiateActionSwitch(::Switch::Action::Toggle);
-			});
+			switch (class_detected) {
+			case KEYWORD_OFF: {
+
+				Nrf::PostTask([] {
+					LOG_INF("Turning light off");
+
+					Nrf::Matter::GetSwitch().InitiateActionSwitch(
+						::Switch::Action::Off);
+				});
+				break;
+			}
+			case KEYWORD_ON: {
+
+				Nrf::PostTask([] {
+					LOG_INF("Turning light on");
+					Nrf::Matter::GetSwitch().InitiateActionSwitch(
+						::Switch::Action::On);
+				});
+				break;
+			}
+			case KEYWORD_SWITCH: {
+
+				Nrf::PostTask([] {
+					LOG_INF("Toggling the light");
+
+					Nrf::Matter::GetSwitch().InitiateActionSwitch(
+						::Switch::Action::Toggle);
+				});
+				break;
+			}
+			default: {
+				LOG_DBG("Not a valid keyword (class %u)", class_detected);
+			}
+			}
+			ww_reset_model();
+			app_state = WAITING_FOR_WAKEWORD;
+			LOG_INF("\n\nWaiting for wakeword...\n\n");
+			break;
+		}
 		}
 	}
 }

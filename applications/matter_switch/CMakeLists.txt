@@ -42,7 +42,9 @@ target_sources(app PRIVATE
 
   src/edgeAI/dmic.c
   src/edgeAI/wakeword.c
-  src/nrf_edgeai_generated/nrf_edgeai_user_model.c
+  src/edgeAI/keyword.c
+  src/models/wakeword/nrf_edgeai_generated/nrf_edgeai_user_model.c
+  src/models/kws/nrf_edgeai_generated/nrf_edgeai_user_model.c
 )
 
 target_sources_ifdef(CONFIG_SWITCH_SHELL app PRIVATE src/switch/shell_commands.cpp)

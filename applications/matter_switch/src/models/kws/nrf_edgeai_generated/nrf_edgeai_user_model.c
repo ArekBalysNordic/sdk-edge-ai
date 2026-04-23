@@ -1,4 +1,3 @@
-/* 2026-01-29T20:26:36.115158 */
 
 #include "nrf_edgeai_user_model.h"
 #include "nrf_edgeai_user_types.h"
@@ -7,7 +6,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /* Nordic EdgeAI Lab Solution ID and Runtime Version */
-#define EDGEAI_LAB_SOLUTION_ID_STR      "1111"
+#define EDGEAI_LAB_SOLUTION_ID_STR      "11323"
 #define EDGEAI_RUNTIME_VERSION_COMBINED 0x00000002
 
 //////////////////////////////////////////////////////////////////////////////
@@ -60,13 +59,18 @@ static const nrf_user_input_t INPUT_FEATURES_SCALE_MAX[] = { 32767 };
 //////////////////////////////////////////////////////////////////////////////
 #define MODEL_TYPE        __NRF_EDGEAI_MODEL_AXON
 #define MODEL_TASK        0
-#define MODEL_OUTPUTS_NUM 1
+#define MODEL_OUTPUTS_NUM 12
+
+#define MODEL_USES_AS_INPUT_INPUT_FEATURES 0
+#define MODEL_USES_AS_INPUT_DSP_FEATURES   1
+#define MODEL_USES_AS_INPUT_MASK \
+    ((MODEL_USES_AS_INPUT_INPUT_FEATURES << 0) | (MODEL_USES_AS_INPUT_DSP_FEATURES << 1))
 
 #if MODEL_TYPE == __NRF_EDGEAI_MODEL_AXON
 #include <drivers/axon/nrf_axon_nn_infer.h>
 #include <axon/nrf_axon_platform.h>
 #include "nrf_edgeai_user_model_axon.h"
-#define P_MODEL_INSTANCE &model_axon_user_instance_wakeword
+#define P_MODEL_INSTANCE &model_stream_state_internal_int8_11
 #else  // MODEL_TYPE == __NRF_EDGEAI_MODEL_NEUTON
 #define P_MODEL_INSTANCE &model_neuton_user_instance_
 #endif
@@ -78,8 +82,8 @@ static const nrf_user_input_t INPUT_FEATURES_SCALE_MAX[] = { 32767 };
     }
 
 //////////////////////////////////////////////////////////////////////////////
-/** Input feature buffer element size,
- * if quantization of model is bigger than input features size in bits,
+/** Input feature buffer element size, 
+ * if quantization of model is bigger than input features size in bits, 
  * the size of input buffer should aligned to nrf_user_neuron_t */
 #define INPUT_TYPE_SIZE                                                                  \
     ((sizeof(nrf_user_input_t) > sizeof(nrf_user_neuron_t)) ? sizeof(nrf_user_input_t) : \
@@ -155,23 +159,23 @@ static const nrf_edgeai_features_pipeline_ctx_t customdomain_pipeline_ = {
 };
 #define P_CUSTOMDOMAIN_PIPELINE &customdomain_pipeline_
 
-static nrf_edgeai_dsp_pipeline_t dsp_pipeline_ = {
-   .features = {
-       .p_masks = (const nrf_edgeai_features_mask_t*)FEATURES_EXTRACTION_MASK,
-       .buffer.p_void = extracted_features_buffer_,
-       .overall_num = EXTRACTED_FEATURES_NUM,
-       .masks_num = sizeof(FEATURES_EXTRACTION_MASK) / sizeof(FEATURES_EXTRACTION_MASK[0]),
+static nrf_edgeai_dsp_pipeline_t dsp_pipeline_ = { 
+   .features = {  
+       .p_masks = (const nrf_edgeai_features_mask_t*)FEATURES_EXTRACTION_MASK, 
+       .buffer.p_void = extracted_features_buffer_, 
+       .overall_num = EXTRACTED_FEATURES_NUM, 
+       .masks_num = sizeof(FEATURES_EXTRACTION_MASK) / sizeof(FEATURES_EXTRACTION_MASK[0]), 
 
-       .p_timedomain_pipeline = P_TIMEDOMAIN_PIPELINE,
-       .p_freqdomain_pipeline = P_FREQDOMAIN_PIPELINE,
-       .p_customdomain_pipeline = P_CUSTOMDOMAIN_PIPELINE,
+       .p_timedomain_pipeline = P_TIMEDOMAIN_PIPELINE, 
+       .p_freqdomain_pipeline = P_FREQDOMAIN_PIPELINE, 
+       .p_customdomain_pipeline = P_CUSTOMDOMAIN_PIPELINE, 
 
-       .meta.EXTRACTED_FEATURES_META_TYPE = {
-           .p_min = EXTRACTED_FEATURES_SCALE_MIN,
-           .p_max = EXTRACTED_FEATURES_SCALE_MAX,
-       .p_arguments = FEATURES_EXTRACTION_ARGUMENTS,
+       .meta.EXTRACTED_FEATURES_META_TYPE = { 
+           .p_min = EXTRACTED_FEATURES_SCALE_MIN, 
+           .p_max = EXTRACTED_FEATURES_SCALE_MAX, 
+       .p_arguments = FEATURES_EXTRACTION_ARGUMENTS, 
        },
-   },
+   }, 
 };
 
 #define P_DSP_PIPELINE &dsp_pipeline_
@@ -195,7 +199,7 @@ static nrf_edgeai_t nrf_edgeai_ = {
     ///
     .metadata.p_solution_id     = EDGEAI_LAB_SOLUTION_ID_STR,
     .metadata.version.combined  = EDGEAI_RUNTIME_VERSION_COMBINED,
-    ///
+    ///   
     .input.p_used_for_lags_mask = INPUT_FEATURES_USED_FOR_LAGS_MASK,
     .input.p_usage_mask         = INPUT_FEATURES_USAGE_MASK,
     .input.type                 = INPUT_FEATURE_DATA_TYPE,
@@ -211,7 +215,7 @@ static nrf_edgeai_t nrf_edgeai_ = {
     .input.scale.INPUT_TYPE = {
         .p_min = INPUT_FEATURES_SCALE_MIN,
         .p_max = INPUT_FEATURES_SCALE_MAX,
-    },
+    }, 
     ///
     .p_dsp = P_DSP_PIPELINE,
     ///
@@ -220,6 +224,7 @@ static nrf_edgeai_t nrf_edgeai_ = {
     .model.instance.p_void      = P_MODEL_INSTANCE,
     .model.output.memory.p_void = model_outputs_,
     .model.output.num           = MODEL_OUTPUTS_NUM,
+    .model.uses_as_input.all    = MODEL_USES_AS_INPUT_MASK,
     ///
     .interfaces.input_init          = NN_INPUT_INIT_INTERFACE,
     .interfaces.feed_inputs         = NN_INPUT_FEED_INTERFACE,
@@ -234,14 +239,14 @@ static nrf_edgeai_t nrf_edgeai_ = {
 
 //////////////////////////////////////////////////////////////////////////////
 
-nrf_edgeai_t* nrf_edgeai_user_model_wakeword(void)
+nrf_edgeai_t* nrf_edgeai_user_model_kws(void)
 {
     return &nrf_edgeai_;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-uint32_t nrf_edgeai_user_model_neuton_size_wakeword(void)
+uint32_t nrf_edgeai_user_model_neuton_size_kws(void)
 {
     uint32_t model_meta_size = 0;
 #if MODEL_TYPE == __NRF_EDGEAI_MODEL_NEUTON

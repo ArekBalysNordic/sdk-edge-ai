@@ -37,19 +37,21 @@ int dmic_init(void)
 		.mem_slab = &dmic_mem_slab,
 	};
 	struct dmic_cfg cfg = {
-		.io = {
-			.min_pdm_clk_freq = 1000000,
-			.max_pdm_clk_freq = 3250000,
-			.min_pdm_clk_dc = 40,
-			.max_pdm_clk_dc = 60,
-		},
+		.io =
+			{
+				.min_pdm_clk_freq = 3200000,
+				.max_pdm_clk_freq = 3700000,
+				.min_pdm_clk_dc = 40,
+				.max_pdm_clk_dc = 60,
+			},
 		.streams = &stream,
-		.channel = {
-			.req_chan_map_lo = dmic_build_channel_map(0, 0, PDM_CHAN_LEFT),
-			.req_chan_map_hi = 0,
-			.req_num_chan = 1,
-			.req_num_streams = 1,
-		},
+		.channel =
+			{
+				.req_chan_map_lo = dmic_build_channel_map(0, 0, PDM_CHAN_LEFT),
+				.req_chan_map_hi = 0,
+				.req_num_chan = 1,
+				.req_num_streams = 1,
+			},
 	};
 
 	err = dmic_configure(dmic_dev, &cfg);
