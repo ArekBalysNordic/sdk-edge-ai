@@ -69,7 +69,6 @@ endmenu
 
 config USE_OCCUPANCY_SENSOR_INSTEAD_OF_AMBIENT_SENSING
 	bool "Use occupancy sensor instead of ambient sensing"
-	default y
 	help
 	  Use occupancy sensor instead of ambient sensing for testing purposes.
 

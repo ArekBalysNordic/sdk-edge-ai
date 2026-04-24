@@ -30,7 +30,10 @@ void MatterGeneralDiagnosticsPluginServerInitCallback();
 void MatterAdministratorCommissioningPluginServerInitCallback();
 void MatterOperationalCredentialsPluginServerInitCallback();
 void MatterGroupKeyManagementPluginServerInitCallback();
+void MatterBooleanStateConfigurationPluginServerInitCallback();
+void MatterServiceAreaPluginServerInitCallback();
 void MatterOccupancySensingPluginServerInitCallback();
+void MatterAmbientContextSensingPluginServerInitCallback();
 
 #define MATTER_PLUGINS_INIT                                                                        \
 	MatterIdentifyPluginServerInitCallback();                                                  \
@@ -44,4 +47,7 @@ void MatterOccupancySensingPluginServerInitCallback();
 	MatterAdministratorCommissioningPluginServerInitCallback();                                \
 	MatterOperationalCredentialsPluginServerInitCallback();                                    \
 	MatterGroupKeyManagementPluginServerInitCallback();                                        \
-	MatterOccupancySensingPluginServerInitCallback();
+	MatterBooleanStateConfigurationPluginServerInitCallback();                                 \
+	MatterServiceAreaPluginServerInitCallback();                                               \
+	MatterOccupancySensingPluginServerInitCallback();                                          \
+	MatterAmbientContextSensingPluginServerInitCallback();

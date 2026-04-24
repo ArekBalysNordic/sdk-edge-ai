@@ -226,7 +226,14 @@ void MatterPostAttributeChangeCallback(const chip::app::ConcreteAttributePath &a
 	ClusterId clusterId = attributePath.mClusterId;
 	AttributeId attributeId = attributePath.mAttributeId;
 
+#ifdef CONFIG_USE_OCCUPANCY_SENSOR_INSTEAD_OF_AMBIENT_SENSING
 	if (clusterId == OccupancySensing::Id &&
 	    attributeId == OccupancySensing::Attributes::Occupancy::Id) {
 	}
+#endif
+}
+
+void MatterAmbientContextSensingPluginServerInitCallback()
+{
+	// For now nothing
 }

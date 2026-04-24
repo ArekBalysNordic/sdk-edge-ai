@@ -34,8 +34,14 @@ void emberAfClusterInitCallback(EndpointId endpoint, ClusterId clusterId)
 	case app::Clusters::AdministratorCommissioning::Id:
 		emberAfAdministratorCommissioningClusterInitCallback(endpoint);
 		break;
+	case app::Clusters::AmbientContextSensing::Id:
+		emberAfAmbientContextSensingClusterInitCallback(endpoint);
+		break;
 	case app::Clusters::BasicInformation::Id:
 		emberAfBasicInformationClusterInitCallback(endpoint);
+		break;
+	case app::Clusters::BooleanStateConfiguration::Id:
+		emberAfBooleanStateConfigurationClusterInitCallback(endpoint);
 		break;
 	case app::Clusters::Descriptor::Id:
 		emberAfDescriptorClusterInitCallback(endpoint);
@@ -67,6 +73,9 @@ void emberAfClusterInitCallback(EndpointId endpoint, ClusterId clusterId)
 	case app::Clusters::OperationalCredentials::Id:
 		emberAfOperationalCredentialsClusterInitCallback(endpoint);
 		break;
+	case app::Clusters::ServiceArea::Id:
+		emberAfServiceAreaClusterInitCallback(endpoint);
+		break;
 	default:
 		// Unrecognized cluster ID
 		break;
@@ -83,7 +92,17 @@ void __attribute__((weak)) emberAfAdministratorCommissioningClusterInitCallback(
 	// To prevent warning
 	(void)endpoint;
 }
+void __attribute__((weak)) emberAfAmbientContextSensingClusterInitCallback(EndpointId endpoint)
+{
+	// To prevent warning
+	(void)endpoint;
+}
 void __attribute__((weak)) emberAfBasicInformationClusterInitCallback(EndpointId endpoint)
+{
+	// To prevent warning
+	(void)endpoint;
+}
+void __attribute__((weak)) emberAfBooleanStateConfigurationClusterInitCallback(EndpointId endpoint)
 {
 	// To prevent warning
 	(void)endpoint;
@@ -134,6 +153,11 @@ void __attribute__((weak)) emberAfOccupancySensingClusterInitCallback(EndpointId
 	(void)endpoint;
 }
 void __attribute__((weak)) emberAfOperationalCredentialsClusterInitCallback(EndpointId endpoint)
+{
+	// To prevent warning
+	(void)endpoint;
+}
+void __attribute__((weak)) emberAfServiceAreaClusterInitCallback(EndpointId endpoint)
 {
 	// To prevent warning
 	(void)endpoint;

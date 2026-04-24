@@ -41,13 +41,18 @@
 #define GENERATED_DEFAULTS_COUNT (0)
 
 // This is an array of EmberAfAttributeMinMaxValue structures.
-#define GENERATED_MIN_MAX_DEFAULT_COUNT 0
+#define GENERATED_MIN_MAX_DEFAULT_COUNT 1
 #define GENERATED_MIN_MAX_DEFAULTS                                                                 \
 	{                                                                                          \
+                                                                                                   \
+		/* Endpoint: 1, Cluster: Ambient Context Sensing (server) */                       \
+		{                                                                                  \
+			(uint16_t)0x0, (uint16_t)0x0, (uint16_t)0xA                                \
+		} /* SimultaneousDetectionLimit */                                                 \
 	}
 
 // This is an array of EmberAfAttributeMetadata structures.
-#define GENERATED_ATTRIBUTE_COUNT 100
+#define GENERATED_ATTRIBUTE_COUNT 109
 #define GENERATED_ATTRIBUTES                                                                       \
 	{                                                                                          \
                                                                                                    \
@@ -159,17 +164,21 @@
 			{ZAP_EMPTY_DEFAULT(), 0x00000000, 0, ZAP_TYPE(ARRAY),                      \
 			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) | ZAP_ATTRIBUTE_MASK(WRITABLE) |     \
 				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* DefaultOTAProviders */          \
-			{ZAP_SIMPLE_DEFAULT(1), 0x00000001, 1, ZAP_TYPE(BOOLEAN),                  \
-			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* UpdatePossible */                       \
-			{ZAP_SIMPLE_DEFAULT(0), 0x00000002, 1, ZAP_TYPE(ENUM8),                    \
-			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* UpdateState */                          \
+			{ZAP_EMPTY_DEFAULT(), 0x00000001, 1, ZAP_TYPE(BOOLEAN),                    \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* UpdatePossible */               \
+			{ZAP_EMPTY_DEFAULT(), 0x00000002, 1, ZAP_TYPE(ENUM8),                      \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* UpdateState */                  \
 			{ZAP_EMPTY_DEFAULT(), 0x00000003, 1, ZAP_TYPE(INT8U),                      \
-			 ZAP_ATTRIBUTE_MASK(READABLE) |                                            \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) | ZAP_ATTRIBUTE_MASK(READABLE) |     \
 				 ZAP_ATTRIBUTE_MASK(NULLABLE)}, /* UpdateStateProgress */          \
-			{ZAP_SIMPLE_DEFAULT(0), 0x0000FFFC, 4, ZAP_TYPE(BITMAP32),                 \
-			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* FeatureMap */                           \
-			{ZAP_SIMPLE_DEFAULT(1), 0x0000FFFD, 2, ZAP_TYPE(INT16U),                   \
-			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* ClusterRevision */                      \
+			{ZAP_EMPTY_DEFAULT(), 0x0000FFFC, 4, ZAP_TYPE(BITMAP32),                   \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* FeatureMap */                   \
+			{ZAP_EMPTY_DEFAULT(), 0x0000FFFD, 2, ZAP_TYPE(INT16U),                     \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* ClusterRevision */              \
                                                                                                    \
 			/* Endpoint: 0, Cluster: General Commissioning (server) */                 \
 			{ZAP_EMPTY_DEFAULT(), 0x00000000, 8, ZAP_TYPE(INT64U),                     \
@@ -337,25 +346,25 @@
 			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
 				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* ClusterRevision */              \
                                                                                                    \
-			/* Endpoint: 1, Cluster: Descriptor (server) */                            \
-			{ZAP_EMPTY_DEFAULT(), 0x00000000, 0, ZAP_TYPE(ARRAY),                      \
-			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
-				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* DeviceTypeList */               \
-			{ZAP_EMPTY_DEFAULT(), 0x00000001, 0, ZAP_TYPE(ARRAY),                      \
-			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
-				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* ServerList */                   \
-			{ZAP_EMPTY_DEFAULT(), 0x00000002, 0, ZAP_TYPE(ARRAY),                      \
-			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
-				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* ClientList */                   \
-			{ZAP_EMPTY_DEFAULT(), 0x00000003, 0, ZAP_TYPE(ARRAY),                      \
-			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
-				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* PartsList */                    \
-			{ZAP_EMPTY_DEFAULT(), 0x0000FFFC, 4, ZAP_TYPE(BITMAP32),                   \
-			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
-				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* FeatureMap */                   \
+			/* Endpoint: 1, Cluster: Boolean State Configuration (server) */           \
+			{ZAP_SIMPLE_DEFAULT(0), 0x0000FFFC, 4, ZAP_TYPE(BITMAP32),                 \
+			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* FeatureMap */                           \
 			{ZAP_EMPTY_DEFAULT(), 0x0000FFFD, 2, ZAP_TYPE(INT16U),                     \
 			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
 				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* ClusterRevision */              \
+                                                                                                   \
+			/* Endpoint: 1, Cluster: Service Area (server) */                          \
+			{ZAP_EMPTY_DEFAULT(), 0x00000000, 0, ZAP_TYPE(ARRAY),                      \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* SupportedAreas */               \
+			{ZAP_EMPTY_DEFAULT(), 0x00000002, 0, ZAP_TYPE(ARRAY),                      \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* SelectedAreas */                \
+			{ZAP_EMPTY_DEFAULT(), 0x0000FFFC, 4, ZAP_TYPE(BITMAP32),                   \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* FeatureMap */                   \
+			{ZAP_SIMPLE_DEFAULT(2), 0x0000FFFD, 2, ZAP_TYPE(INT16U),                   \
+			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* ClusterRevision */                      \
                                                                                                    \
 			/* Endpoint: 1, Cluster: Occupancy Sensing (server) */                     \
 			{ZAP_EMPTY_DEFAULT(), 0x00000000, 1, ZAP_TYPE(BITMAP8),                    \
@@ -364,16 +373,40 @@
 			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* OccupancySensorType */                  \
 			{ZAP_EMPTY_DEFAULT(), 0x00000002, 1, ZAP_TYPE(BITMAP8),                    \
 			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* OccupancySensorTypeBitmap */            \
-			{ZAP_EMPTY_DEFAULT(), 0x0000FFFC, 4, ZAP_TYPE(BITMAP32),                   \
-			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
-				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* FeatureMap */                   \
+			{ZAP_SIMPLE_DEFAULT(0), 0x0000FFFC, 4, ZAP_TYPE(BITMAP32),                 \
+			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* FeatureMap */                           \
 			{ZAP_EMPTY_DEFAULT(), 0x0000FFFD, 2, ZAP_TYPE(INT16U),                     \
 			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
 				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* ClusterRevision */              \
+                                                                                                   \
+			/* Endpoint: 1, Cluster: Ambient Context Sensing (server) */               \
+			{ZAP_EMPTY_DEFAULT(), 0x00000000, 1, ZAP_TYPE(BOOLEAN),                    \
+			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* HumanActivityDetected */                \
+			{ZAP_EMPTY_DEFAULT(), 0x00000002, 1, ZAP_TYPE(BOOLEAN),                    \
+			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* AudioContextDetected */                 \
+			{ZAP_EMPTY_DEFAULT(), 0x00000003, 0, ZAP_TYPE(ARRAY),                      \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* AmbientContextType */           \
+			{ZAP_EMPTY_DEFAULT(), 0x00000004, 0, ZAP_TYPE(ARRAY),                      \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* AmbientContextTypeSupported */  \
+			{ZAP_MIN_MAX_DEFAULTS_INDEX(0), 0x00000008, 1, ZAP_TYPE(INT8U),            \
+			 ZAP_ATTRIBUTE_MASK(MIN_MAX) | ZAP_ATTRIBUTE_MASK(WRITABLE) |              \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* SimultaneousDetectionLimit */   \
+			{ZAP_EMPTY_DEFAULT(), 0x00000009, 2, ZAP_TYPE(INT16U),                     \
+			 ZAP_ATTRIBUTE_MASK(WRITABLE) |                                            \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* HoldTime */                     \
+			{ZAP_EMPTY_DEFAULT(), 0x0000000A, 0, ZAP_TYPE(STRUCT),                     \
+			 ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE) |                                    \
+				 ZAP_ATTRIBUTE_MASK(READABLE)}, /* HoldTimeLimits */               \
+			{ZAP_SIMPLE_DEFAULT(9), 0x0000FFFC, 4, ZAP_TYPE(BITMAP32),                 \
+			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* FeatureMap */                           \
+			{ZAP_SIMPLE_DEFAULT(1), 0x0000FFFD, 2, ZAP_TYPE(INT16U),                   \
+			 ZAP_ATTRIBUTE_MASK(READABLE)}, /* ClusterRevision */                      \
 	}
 
 // clang-format off
-#define GENERATED_EVENT_COUNT 7
+#define GENERATED_EVENT_COUNT 8
 #define GENERATED_EVENTS { \
   /* Endpoint: 0, Cluster: Basic Information (server) */ \
   /* EventList (index=0) */ \
@@ -385,18 +418,16 @@
   0x00000000, /* StateTransition */ \
   0x00000001, /* VersionApplied */ \
   0x00000002, /* DownloadError */ \
-  /* Endpoint: 1, Cluster: Occupancy Sensing (server) */ \
+  /* Endpoint: 1, Cluster: Ambient Context Sensing (server) */ \
   /* EventList (index=6) */ \
-  0x00000000, /* OccupancyChanged */ \
+  0x00000000, /* AmbientContextDetectStarted */ \
+  0x00000001, /* AmbientContextDetectEnded */ \
 }
 
 // clang-format on
 
 // Cluster function static arrays
-#define GENERATED_FUNCTION_ARRAYS                                                                  \
-	const EmberAfGenericClusterFunction chipFuncArrayOccupancySensingServer[] = {              \
-		(EmberAfGenericClusterFunction)emberAfOccupancySensingClusterServerInitCallback,   \
-	};
+#define GENERATED_FUNCTION_ARRAYS
 
 // clang-format off
 #define GENERATED_COMMANDS { \
@@ -477,14 +508,20 @@
   /* Endpoint: 1, Cluster: Identify (server) */\
   /*   AcceptedCommandList (index=55) */ \
   0x00000000 /* Identify */, \
-  0x00000040 /* TriggerEffect */, \
+  chip::kInvalidCommandId /* end of list */, \
+  /* Endpoint: 1, Cluster: Service Area (server) */\
+  /*   AcceptedCommandList (index=57) */ \
+  0x00000000 /* SelectAreas */, \
+  chip::kInvalidCommandId /* end of list */, \
+  /*   GeneratedCommandList (index=59)*/ \
+  0x00000001 /* SelectAreasResponse */, \
   chip::kInvalidCommandId /* end of list */, \
 }
 
 // clang-format on
 
 // This is an array of EmberAfCluster structures.
-#define GENERATED_CLUSTER_COUNT 14
+#define GENERATED_CLUSTER_COUNT 16
 // clang-format off
 #define GENERATED_CLUSTERS { \
   { \
@@ -544,7 +581,7 @@
       .clusterId = 0x0000002A, \
       .attributes = ZAP_ATTRIBUTE_INDEX(32), \
       .attributeCount = 6, \
-      .clusterSize = 9, \
+      .clusterSize = 0, \
       .mask = ZAP_CLUSTER_MASK(SERVER), \
       .functions = NULL, \
       .acceptedCommandList = ZAP_GENERATED_COMMANDS_INDEX( 0 ), \
@@ -644,11 +681,11 @@
       .eventCount = 0, \
     },\
   { \
-      /* Endpoint: 1, Cluster: Descriptor (server) */ \
-      .clusterId = 0x0000001D, \
+      /* Endpoint: 1, Cluster: Boolean State Configuration (server) */ \
+      .clusterId = 0x00000080, \
       .attributes = ZAP_ATTRIBUTE_INDEX(89), \
-      .attributeCount = 6, \
-      .clusterSize = 0, \
+      .attributeCount = 2, \
+      .clusterSize = 4, \
       .mask = ZAP_CLUSTER_MASK(SERVER), \
       .functions = NULL, \
       .acceptedCommandList = nullptr, \
@@ -657,28 +694,54 @@
       .eventCount = 0, \
     },\
   { \
+      /* Endpoint: 1, Cluster: Service Area (server) */ \
+      .clusterId = 0x00000150, \
+      .attributes = ZAP_ATTRIBUTE_INDEX(91), \
+      .attributeCount = 4, \
+      .clusterSize = 2, \
+      .mask = ZAP_CLUSTER_MASK(SERVER), \
+      .functions = NULL, \
+      .acceptedCommandList = ZAP_GENERATED_COMMANDS_INDEX( 57 ), \
+      .generatedCommandList = ZAP_GENERATED_COMMANDS_INDEX( 59 ), \
+      .eventList = nullptr, \
+      .eventCount = 0, \
+    },\
+  { \
       /* Endpoint: 1, Cluster: Occupancy Sensing (server) */ \
       .clusterId = 0x00000406, \
       .attributes = ZAP_ATTRIBUTE_INDEX(95), \
       .attributeCount = 5, \
-      .clusterSize = 3, \
-      .mask = ZAP_CLUSTER_MASK(SERVER) | ZAP_CLUSTER_MASK(INIT_FUNCTION), \
-      .functions = chipFuncArrayOccupancySensingServer, \
+      .clusterSize = 7, \
+      .mask = ZAP_CLUSTER_MASK(SERVER), \
+      .functions = NULL, \
+      .acceptedCommandList = nullptr, \
+      .generatedCommandList = nullptr, \
+      .eventList = nullptr, \
+      .eventCount = 0, \
+    },\
+  { \
+      /* Endpoint: 1, Cluster: Ambient Context Sensing (server) */ \
+      .clusterId = 0x00000431, \
+      .attributes = ZAP_ATTRIBUTE_INDEX(100), \
+      .attributeCount = 9, \
+      .clusterSize = 11, \
+      .mask = ZAP_CLUSTER_MASK(SERVER), \
+      .functions = NULL, \
       .acceptedCommandList = nullptr, \
       .generatedCommandList = nullptr, \
       .eventList = ZAP_GENERATED_EVENTS_INDEX( 6 ), \
-      .eventCount = 1, \
+      .eventCount = 2, \
     },\
 }
 
 // clang-format on
 
-#define ZAP_FIXED_ENDPOINT_DATA_VERSION_COUNT 13
+#define ZAP_FIXED_ENDPOINT_DATA_VERSION_COUNT 15
 
 // This is an array of EmberAfEndpointType structures.
 #define GENERATED_ENDPOINT_TYPES                                                                   \
 	{                                                                                          \
-		{ZAP_CLUSTER_INDEX(0), 11, 13}, {ZAP_CLUSTER_INDEX(11), 3, 3},                     \
+		{ZAP_CLUSTER_INDEX(0), 11, 4}, {ZAP_CLUSTER_INDEX(11), 5, 24},                     \
 	}
 
 // Largest attribute size is needed for various buffers
@@ -691,7 +754,7 @@ static_assert(ATTRIBUTE_LARGEST <= CHIP_CONFIG_MAX_ATTRIBUTE_STORE_ELEMENT_SIZE,
 #define ATTRIBUTE_SINGLETONS_SIZE (0)
 
 // Total size of attribute storage
-#define ATTRIBUTE_MAX_SIZE (16)
+#define ATTRIBUTE_MAX_SIZE (28)
 
 // Number of fixed endpoints
 #define FIXED_ENDPOINT_COUNT (2)
@@ -714,7 +777,7 @@ static_assert(ATTRIBUTE_LARGEST <= CHIP_CONFIG_MAX_ATTRIBUTE_STORE_ELEMENT_SIZE,
 	{                                                                                          \
 		{0x00000012, 1}, {0x00000016, 4},                                                  \
 		{                                                                                  \
-			0x00000107, 1                                                              \
+			0x00000150, 1                                                              \
 		}                                                                                  \
 	}
 
