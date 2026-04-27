@@ -21,7 +21,7 @@ static nrf_edgeai_t *ww_model;
 
 int ww_init(void)
 {
-	ww_model = nrf_edgeai_user_model_92597();
+	ww_model = nrf_edgeai_user_model_92652();
 	__ASSERT_NO_MSG(ww_model);
 
 	nrf_edgeai_err_t err = nrf_edgeai_init(ww_model);

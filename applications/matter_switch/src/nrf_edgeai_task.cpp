@@ -129,7 +129,7 @@ void switch_thread_fn()
 			if (ww_detected) {
 
 				LOG_INF("wakeword detected, Looking for keywords");
-
+				ww_reset_model();
 				kw_reset_model();
 				kws_start_time = k_uptime_get_32();
 				app_state = WAITING_FOR_KEYWORDS;
@@ -139,6 +139,7 @@ void switch_thread_fn()
 		case WAITING_FOR_KEYWORDS: {
 			if (k_uptime_get_32() - kws_start_time > KEYWORD_SPOTTING_TIMEOUT_MS) {
 				ww_reset_model();
+				kw_reset_model();
 				app_state = WAITING_FOR_WAKEWORD;
 				LOG_INF("\n\nWaiting for wakeword...\n\n");
 				break;
@@ -158,12 +159,11 @@ void switch_thread_fn()
 			if (kws == 0) {
 				break;
 			}
-
+			break;
 			switch (class_detected) {
 			case KEYWORD_OFF: {
 				SystemLayer().ScheduleLambda([] {
 					LOG_INF("Turning light off");
-
 					Nrf::Matter::GetSwitch().InitiateActionSwitch(
 						::Switch::Action::Off);
 				});
@@ -190,8 +190,9 @@ void switch_thread_fn()
 				LOG_DBG("Not a valid keyword (class %u)", class_detected);
 			}
 			}
-			k_thread_suspend(switch_thread_id);
+			// k_thread_suspend(switch_thread_id);
 			ww_reset_model();
+			kw_reset_model();
 			app_state = WAITING_FOR_WAKEWORD;
 			LOG_INF("\n\nWaiting for wakeword...\n\n");
 			break;
@@ -210,7 +211,7 @@ CHIP_ERROR EdgeAITask::Start()
 
 void EdgeAITask::Enable()
 {
-	LOG_INF("\n\nWaiting for wakeword...\n\n");
+	LOG_INF("\n\nAI task Enabled\n\n");
 	enabled.store(true, std::memory_order_release);
 }
 

@@ -119,15 +119,25 @@ void LightSwitch::OnOffProcessCommand(CommandId commandId, const Binding::TableE
 {
 	CHIP_ERROR ret = CHIP_NO_ERROR;
 
-	auto onSuccess = [dataPointer = Platform::New<Nrf::Matter::BindingHandler::BindingData>(
-				  bindingData)](const ConcreteCommandPath &commandPath,
-						const StatusIB &status, const auto &dataResponse) {
-		Nrf::Matter::BindingHandler::OnInvokeCommandSucces(dataPointer);
+	/* A single BindingData is shared between the success and failure lambdas.
+	 * Only one of the two callbacks is ever invoked by the InvokeCommandRequest
+	 * machinery, and that callback is responsible for deleting it. Allocating
+	 * two copies (one per lambda) would leak one per command and exhaust the
+	 * heap, eventually corrupting unrelated structures (observed as a bus fault
+	 * at PC=0x80808080 inside DispatchEventToApplication). */
+	auto *lambdaData = Platform::New<Nrf::Matter::BindingHandler::BindingData>(bindingData);
+	if (!lambdaData) {
+		LOG_ERR("Failed to allocate BindingData for OnOff command");
+		return;
+	}
+
+	auto onSuccess = [lambdaData](const ConcreteCommandPath &commandPath,
+				      const StatusIB &status, const auto &dataResponse) {
+		Nrf::Matter::BindingHandler::OnInvokeCommandSucces(lambdaData);
 	};
 
-	auto onFailure = [dataPointer = Platform::New<Nrf::Matter::BindingHandler::BindingData>(
-				  bindingData)](CHIP_ERROR aError) mutable {
-		Nrf::Matter::BindingHandler::OnInvokeCommandFailure(dataPointer, aError);
+	auto onFailure = [lambdaData](CHIP_ERROR aError) mutable {
+		Nrf::Matter::BindingHandler::OnInvokeCommandFailure(lambdaData, aError);
 	};
 
 	if (device) {
@@ -192,15 +202,21 @@ void LightSwitch::LevelControlProcessCommand(CommandId commandId,
 					     OperationalDeviceProxy *device,
 					     Nrf::Matter::BindingHandler::BindingData &bindingData)
 {
-	auto onSuccess = [dataPointer = Platform::New<Nrf::Matter::BindingHandler::BindingData>(
-				  bindingData)](const ConcreteCommandPath &commandPath,
-						const StatusIB &status, const auto &dataResponse) {
-		Nrf::Matter::BindingHandler::OnInvokeCommandSucces(dataPointer);
+	/* See OnOffProcessCommand for the rationale: share one BindingData between
+	 * the success and failure lambdas to avoid a per-command leak. */
+	auto *lambdaData = Platform::New<Nrf::Matter::BindingHandler::BindingData>(bindingData);
+	if (!lambdaData) {
+		LOG_ERR("Failed to allocate BindingData for LevelControl command");
+		return;
+	}
+
+	auto onSuccess = [lambdaData](const ConcreteCommandPath &commandPath,
+				      const StatusIB &status, const auto &dataResponse) {
+		Nrf::Matter::BindingHandler::OnInvokeCommandSucces(lambdaData);
 	};
 
-	auto onFailure = [dataPointer = Platform::New<Nrf::Matter::BindingHandler::BindingData>(
-				  bindingData)](CHIP_ERROR aError) mutable {
-		Nrf::Matter::BindingHandler::OnInvokeCommandFailure(dataPointer, aError);
+	auto onFailure = [lambdaData](CHIP_ERROR aError) mutable {
+		Nrf::Matter::BindingHandler::OnInvokeCommandFailure(lambdaData, aError);
 	};
 
 	CHIP_ERROR ret = CHIP_NO_ERROR;

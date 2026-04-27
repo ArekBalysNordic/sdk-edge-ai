@@ -82,7 +82,7 @@ int kw_process(uint8_t *const audio_buffer, const uint16_t num_samples, uint16_t
 		LOG_ERR("Failed to run inference (err %d)", err);
 		return -EPERM;
 	}
-
+	return 0;
 	/* KWS model may have more output classes (e.g. 12) than this app enum (KEYWORDS_cnt). */
 	const uint16_t raw_class = kw_model->decoded_output.classif.predicted_class;
 	const uint16_t n_out = nrf_edgeai_model_outputs_num(kw_model);
