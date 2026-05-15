@@ -20,24 +20,34 @@
  *  - discovering a CHIP light bulb which advertises itself by sending Thread multicast packets
  *  - toggling and dimming the connected CHIP light bulb by sending appropriate CHIP messages
  */
-class LightSwitch : public Switch {
-public:
+class LightSwitch : public Switch
+{
+      public:
 	LightSwitch() = default;
 
 	void Init() override;
 	void InitiateActionSwitch(Action action) override;
 	void DimmerChangeBrightness() override;
+	void SetBrightness(uint8_t level) override;
+	void SetColorTemperature(uint8_t value) override;
 
-private:
+      private:
 	static void OnOffProcessCommand(chip::CommandId commandId,
 					const chip::app::Clusters::Binding::TableEntry &binding,
 					chip::OperationalDeviceProxy *device,
 					Nrf::Matter::BindingHandler::BindingData &bindingData);
 
-	static void LevelControlProcessCommand(chip::CommandId commandId,
-					       const chip::app::Clusters::Binding::TableEntry &binding,
-					       chip::OperationalDeviceProxy *device,
-					       Nrf::Matter::BindingHandler::BindingData &bindingData);
+	static void
+	LevelControlProcessCommand(chip::CommandId commandId,
+				   const chip::app::Clusters::Binding::TableEntry &binding,
+				   chip::OperationalDeviceProxy *device,
+				   Nrf::Matter::BindingHandler::BindingData &bindingData);
+
+	static void
+	ColorControlProcessCommand(chip::CommandId commandId,
+				   const chip::app::Clusters::Binding::TableEntry &binding,
+				   chip::OperationalDeviceProxy *device,
+				   Nrf::Matter::BindingHandler::BindingData &bindingData);
 
 	static void SwitchChangedHandler(const chip::app::Clusters::Binding::TableEntry &binding,
 					 chip::OperationalDeviceProxy *deviceProxy,

@@ -45,7 +45,7 @@ void GenericSwitch::InitiateActionSwitch(Action action)
 		ShortReleaseHandler();
 		break;
 	case Action::LongPress:
-	LongPressHandler();
+		LongPressHandler();
 		LongReleaseHandler();
 		break;
 	default:
@@ -57,6 +57,18 @@ void GenericSwitch::DimmerChangeBrightness()
 {
 	// Use long press handler for brightness changes
 	// Each call represents a brightness step during dimming
+	LongPressHandler();
+}
+
+void GenericSwitch::SetBrightness(uint8_t level)
+{
+	// Use long press handler for brightness changes
+	LongPressHandler();
+}
+
+void GenericSwitch::SetColorTemperature(uint8_t value)
+{
+	// Use long press handler for color changes
 	LongPressHandler();
 }
 

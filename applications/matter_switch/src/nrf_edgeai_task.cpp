@@ -178,12 +178,42 @@ void switch_thread_fn()
 				break;
 			}
 			case KEYWORD_SWITCH: {
-				SystemLayer().ScheduleLambda([] {
-					LOG_INF("Toggling the light");
-
-					Nrf::Matter::GetSwitch().InitiateActionSwitch(
-						::Switch::Action::Toggle);
-				});
+				static uint8_t scene = 0;
+				switch (scene) {
+				case 0: {
+					SystemLayer().ScheduleLambda([] {
+						LOG_INF("Scene 1");
+						Nrf::Matter::GetSwitch().SetBrightness(50);
+						Nrf::Matter::GetSwitch().SetColorTemperature(15);
+					});
+					break;
+				}
+				case 1: {
+					SystemLayer().ScheduleLambda([] {
+						LOG_INF("Scene 2");
+						Nrf::Matter::GetSwitch().SetBrightness(100);
+						Nrf::Matter::GetSwitch().SetColorTemperature(20);
+					});
+					break;
+				}
+				case 2: {
+					SystemLayer().ScheduleLambda([] {
+						LOG_INF("Scene 3");
+						Nrf::Matter::GetSwitch().SetBrightness(175);
+						Nrf::Matter::GetSwitch().SetColorTemperature(30);
+					});
+					break;
+				}
+				case 3: {
+					SystemLayer().ScheduleLambda([] {
+						LOG_INF("Scene 4");
+						Nrf::Matter::GetSwitch().SetBrightness(254);
+						Nrf::Matter::GetSwitch().SetColorTemperature(254);
+					});
+					break;
+				}
+				}
+				scene = (scene + 1) % 4;
 				break;
 			}
 			default: {

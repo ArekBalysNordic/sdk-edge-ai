@@ -40,6 +40,9 @@ void emberAfClusterInitCallback(EndpointId endpoint, ClusterId clusterId)
 	case app::Clusters::Binding::Id:
 		emberAfBindingClusterInitCallback(endpoint);
 		break;
+	case app::Clusters::ColorControl::Id:
+		emberAfColorControlClusterInitCallback(endpoint);
+		break;
 	case app::Clusters::Descriptor::Id:
 		emberAfDescriptorClusterInitCallback(endpoint);
 		break;
@@ -113,6 +116,11 @@ void __attribute__((weak)) emberAfBasicInformationClusterInitCallback(EndpointId
 	(void)endpoint;
 }
 void __attribute__((weak)) emberAfBindingClusterInitCallback(EndpointId endpoint)
+{
+	// To prevent warning
+	(void)endpoint;
+}
+void __attribute__((weak)) emberAfColorControlClusterInitCallback(EndpointId endpoint)
 {
 	// To prevent warning
 	(void)endpoint;

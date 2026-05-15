@@ -22,13 +22,13 @@
  */
 class Switch
 {
-public:
+      public:
 	enum class Action : uint8_t {
-		Toggle, /* Switch state on lighting-app device */
-		On,	/* Turn on light on lighting-app device */
-		Off,	/* Turn off light on lighting-app device */
+		Toggle,	    /* Switch state on lighting-app device */
+		On,	    /* Turn on light on lighting-app device */
+		Off,	    /* Turn off light on lighting-app device */
 		ShortPress, /* Short press on switch */
-		LongPress, /* Long press on switch */
+		LongPress,  /* Long press on switch */
 	};
 
 	/**
@@ -52,12 +52,16 @@ public:
 	 */
 	virtual void DimmerChangeBrightness() = 0;
 
+	virtual void SetBrightness(uint8_t level) = 0;
+
+	virtual void SetColorTemperature(uint8_t value) = 0;
+
 	chip::EndpointId GetSwitchEndpointId()
 	{
 		return sSwitchEndpoint;
 	}
 
-protected:
+      protected:
 	bool mCurrentState = false;
 
 	constexpr static chip::EndpointId sSwitchEndpoint =
