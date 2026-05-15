@@ -19,7 +19,7 @@
   "package": [
     {
       "pathRelativity": "relativeToZap",
-      "path": "../../../../../../modules/lib/matter/src/app/zap-templates/zcl/zcl.json",
+      "path": "../../../../../modules/lib/matter/src/app/zap-templates/zcl/zcl.json",
       "type": "zcl-properties",
       "category": "matter",
       "version": 1,
@@ -27,7 +27,7 @@
     },
     {
       "pathRelativity": "relativeToZap",
-      "path": "../../../../../../modules/lib/matter/src/app/zap-templates/app-templates.json",
+      "path": "../../../../../modules/lib/matter/src/app/zap-templates/app-templates.json",
       "type": "gen-templates-json",
       "category": "matter",
       "version": "chip-v1"
@@ -4205,29 +4205,29 @@
       "id": 2,
       "name": "MA-onofflightswitch",
       "deviceTypeRef": {
-        "code": 260,
+        "code": 261,
         "profileId": 259,
-        "label": "MA-dimmerswitch",
-        "name": "MA-dimmerswitch",
+        "label": "MA-colordimmerswitch",
+        "name": "MA-colordimmerswitch",
         "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
-          "code": 260,
+          "code": 261,
           "profileId": 259,
-          "label": "MA-dimmerswitch",
-          "name": "MA-dimmerswitch",
+          "label": "MA-colordimmerswitch",
+          "name": "MA-colordimmerswitch",
           "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
-        3
+        1
       ],
       "deviceIdentifiers": [
-        260
+        261
       ],
-      "deviceTypeName": "MA-dimmerswitch",
-      "deviceTypeCode": 260,
+      "deviceTypeName": "MA-colordimmerswitch",
+      "deviceTypeCode": 261,
       "deviceTypeProfileId": 259,
       "clusters": [
         {
@@ -4271,6 +4271,14 @@
               "source": "client",
               "isIncoming": 1,
               "isEnabled": 1
+            },
+            {
+              "name": "TriggerEffect",
+              "code": 64,
+              "mfgCode": null,
+              "source": "client",
+              "isIncoming": 1,
+              "isEnabled": 1
             }
           ],
           "attributes": [
@@ -4285,7 +4293,7 @@
               "singleton": 0,
               "bounded": 0,
               "defaultValue": null,
-              "reportable": 1,
+              "reportable": 0,
               "minInterval": 0,
               "maxInterval": 65344,
               "reportableChange": 0
@@ -4301,7 +4309,7 @@
               "singleton": 0,
               "bounded": 0,
               "defaultValue": null,
-              "reportable": 1,
+              "reportable": 0,
               "minInterval": 1,
               "maxInterval": 65534,
               "reportableChange": 0
@@ -4489,7 +4497,7 @@
               "singleton": 0,
               "bounded": 0,
               "defaultValue": "",
-              "reportable": 1,
+              "reportable": 0,
               "minInterval": 0,
               "maxInterval": 65344,
               "reportableChange": 0
@@ -4719,7 +4727,7 @@
               "singleton": 0,
               "bounded": 0,
               "defaultValue": null,
-              "reportable": 1,
+              "reportable": 0,
               "minInterval": 1,
               "maxInterval": 65534,
               "reportableChange": 0
@@ -4735,7 +4743,7 @@
               "singleton": 0,
               "bounded": 0,
               "defaultValue": null,
-              "reportable": 1,
+              "reportable": 0,
               "minInterval": 1,
               "maxInterval": 65534,
               "reportableChange": 0
@@ -4751,7 +4759,7 @@
               "singleton": 0,
               "bounded": 0,
               "defaultValue": null,
-              "reportable": 1,
+              "reportable": 0,
               "minInterval": 1,
               "maxInterval": 65534,
               "reportableChange": 0
@@ -4943,6 +4951,14 @@
               "reportableChange": 0
             }
           ]
+        },
+        {
+          "name": "Color Control",
+          "code": 768,
+          "mfgCode": null,
+          "define": "COLOR_CONTROL_CLUSTER",
+          "side": "client",
+          "enabled": 1
         }
       ]
     }
@@ -4962,7 +4978,7 @@
       "profileId": 259,
       "endpointId": 1,
       "networkId": 0,
-      "parentEndpointIdentifier": null
+      "parentEndpointIdentifier": 0
     }
   ]
 }

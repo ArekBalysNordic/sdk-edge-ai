@@ -58,6 +58,28 @@ void LightSwitch::InitiateActionSwitch(Action action)
 	}
 }
 
+void LightSwitch::SetBrightness(uint8_t level)
+{
+	auto *data = Platform::New<Nrf::Matter::BindingHandler::BindingData>();
+	data->EndpointId = Nrf::Matter::GetSwitch().GetSwitchEndpointId();
+	data->ClusterId = Clusters::LevelControl::Id;
+	data->CommandId = Clusters::LevelControl::Commands::MoveToLevel::Id;
+	data->InvokeCommandFunc = SwitchChangedHandler;
+	data->Value = level; // 0–254
+	Nrf::Matter::BindingHandler::RunBoundClusterAction(data);
+}
+
+void LightSwitch::SetColorTemperature(uint8_t value)
+{
+	auto *data = Platform::New<Nrf::Matter::BindingHandler::BindingData>();
+	data->EndpointId = GetSwitchEndpointId();
+	data->ClusterId = Clusters::ColorControl::Id;
+	data->CommandId = Clusters::ColorControl::Commands::MoveToColorTemperature::Id;
+	data->InvokeCommandFunc = SwitchChangedHandler;
+	data->Value = value;
+	Nrf::Matter::BindingHandler::RunBoundClusterAction(data);
+}
+
 void LightSwitch::DimmerChangeBrightness()
 {
 	static uint16_t sBrightness;
@@ -92,6 +114,10 @@ void LightSwitch::SwitchChangedHandler(const Binding::TableEntry &binding,
 			LevelControlProcessCommand(bindingData.CommandId, binding, nullptr,
 						   bindingData);
 			break;
+		case Clusters::ColorControl::Id:
+			ColorControlProcessCommand(bindingData.CommandId, binding, nullptr,
+						   bindingData);
+			break;
 		default:
 			LOG_ERR("Invalid binding group command data");
 			break;
@@ -104,6 +130,10 @@ void LightSwitch::SwitchChangedHandler(const Binding::TableEntry &binding,
 			break;
 		case Clusters::LevelControl::Id:
 			LevelControlProcessCommand(bindingData.CommandId, binding, deviceProxy,
+						   bindingData);
+			break;
+		case Clusters::ColorControl::Id:
+			ColorControlProcessCommand(bindingData.CommandId, binding, deviceProxy,
 						   bindingData);
 			break;
 		default:
@@ -250,6 +280,69 @@ void LightSwitch::LevelControlProcessCommand(CommandId commandId,
 				moveToLevelCommand);
 		}
 	} break;
+	default:
+		LOG_DBG("Invalid binding command data - commandId is not supported");
+		break;
+	}
+	if (CHIP_NO_ERROR != ret) {
+		LOG_ERR("Invoke Group Command Request ERROR: %s", ErrorStr(ret));
+	}
+}
+
+void LightSwitch::ColorControlProcessCommand(CommandId commandId,
+					     const Binding::TableEntry &binding,
+					     OperationalDeviceProxy *device,
+					     Nrf::Matter::BindingHandler::BindingData &bindingData)
+{
+	Nrf::Matter::BindingHandler::BindingData *invokeCallbacksContext = nullptr;
+	if (device) {
+		invokeCallbacksContext =
+			Platform::New<Nrf::Matter::BindingHandler::BindingData>(bindingData);
+		VerifyOrDie(invokeCallbacksContext != nullptr);
+	}
+
+	auto onSuccess = [invokeCallbacksContext](const ConcreteCommandPath &commandPath,
+						  const StatusIB &status,
+						  const auto &dataResponse) {
+		if (invokeCallbacksContext != nullptr) {
+			Nrf::Matter::BindingHandler::OnInvokeCommandSucces(invokeCallbacksContext);
+		}
+	};
+
+	auto onFailure = [invokeCallbacksContext](CHIP_ERROR aError) mutable {
+		if (invokeCallbacksContext != nullptr) {
+			Nrf::Matter::BindingHandler::OnInvokeCommandFailure(invokeCallbacksContext,
+									    aError);
+		}
+	};
+
+	CHIP_ERROR ret = CHIP_NO_ERROR;
+
+	if (device) {
+		/* We are validating connection is ready once here instead of multiple times in each
+		 * case statement below.
+		 */
+		VerifyOrDie(device->ConnectionReady());
+	}
+
+	switch (commandId) {
+	case Clusters::ColorControl::Commands::MoveToColorTemperature::Id: {
+		Clusters::ColorControl::Commands::MoveToColorTemperature::Type cmd;
+		/* Workaround in order not to change the binding data in ncs */
+		cmd.colorTemperatureMireds = bindingData.Value << 3;
+		if (device) {
+			ret = Controller::InvokeCommandRequest(
+				device->GetExchangeManager(), device->GetSecureSession().Value(),
+				binding.remote, cmd, onSuccess, onFailure);
+
+		} else {
+			Messaging::ExchangeManager &exchangeMgr =
+				Server::GetInstance().GetExchangeManager();
+			ret = Controller::InvokeGroupCommandRequest(
+				&exchangeMgr, binding.fabricIndex, binding.groupId, cmd);
+		}
+		break;
+	}
 	default:
 		LOG_DBG("Invalid binding command data - commandId is not supported");
 		break;

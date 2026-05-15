@@ -8,27 +8,27 @@
 
 #include "light_switch.h"
 
-
 /** @class GenericSwitch
  *  @brief Class for controlling a CHIP generic switch over a Thread network
  *
  *  Features:
  *  - implementing the Momentary Switch (`MS`) and Momentary Switch Release (`MSR`) features.
  */
-class GenericSwitch : public Switch {
+class GenericSwitch : public Switch
+{
 
-public:
+      public:
+	GenericSwitch() = default;
 
-    GenericSwitch() = default;
+	void Init() override;
+	void InitiateActionSwitch(Action action) override;
+	void DimmerChangeBrightness() override;
+	void SetBrightness(uint8_t level) override;
+	void SetColorTemperature(uint8_t value) override;
 
-    void Init() override;
-    void InitiateActionSwitch(Action action) override;
-    void DimmerChangeBrightness() override;
-
-private:
-
-    void InitialPressHandler();
-    void ShortReleaseHandler();
-    void LongReleaseHandler();
-    void LongPressHandler();
+      private:
+	void InitialPressHandler();
+	void ShortReleaseHandler();
+	void LongReleaseHandler();
+	void LongPressHandler();
 };

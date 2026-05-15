@@ -38,22 +38,22 @@ void MatterOperationalCredentialsPluginServerInitCallback();
 void MatterGroupKeyManagementPluginServerInitCallback();
 void MatterIcdManagementPluginServerInitCallback();
 
-#define MATTER_PLUGINS_INIT                                                                                            \
-	MatterIdentifyPluginServerInitCallback();                                                                      \
-	MatterGroupsPluginServerInitCallback();                                                                        \
-	MatterDescriptorPluginServerInitCallback();                                                                    \
-	MatterBindingPluginServerInitCallback();                                                                       \
-	MatterAccessControlPluginServerInitCallback();                                                                 \
-	MatterBasicInformationPluginServerInitCallback();                                                              \
-	MatterOtaSoftwareUpdateRequestorPluginServerInitCallback();                                                    \
-	MatterGeneralCommissioningPluginServerInitCallback();                                                          \
-	MatterNetworkCommissioningPluginServerInitCallback();                                                          \
-	MatterDiagnosticLogsPluginServerInitCallback();                                                                \
-	MatterGeneralDiagnosticsPluginServerInitCallback();                                                            \
-	MatterSoftwareDiagnosticsPluginServerInitCallback();                                                           \
-	MatterThreadNetworkDiagnosticsPluginServerInitCallback();                                                      \
-	MatterWiFiNetworkDiagnosticsPluginServerInitCallback();                                                        \
-	MatterAdministratorCommissioningPluginServerInitCallback();                                                    \
-	MatterOperationalCredentialsPluginServerInitCallback();                                                        \
-	MatterGroupKeyManagementPluginServerInitCallback();                                                            \
+#define MATTER_PLUGINS_INIT                                                                        \
+	MatterIdentifyPluginServerInitCallback();                                                  \
+	MatterGroupsPluginServerInitCallback();                                                    \
+	MatterDescriptorPluginServerInitCallback();                                                \
+	MatterBindingPluginServerInitCallback();                                                   \
+	MatterAccessControlPluginServerInitCallback();                                             \
+	MatterBasicInformationPluginServerInitCallback();                                          \
+	MatterOtaSoftwareUpdateRequestorPluginServerInitCallback();                                \
+	MatterGeneralCommissioningPluginServerInitCallback();                                      \
+	MatterNetworkCommissioningPluginServerInitCallback();                                      \
+	MatterDiagnosticLogsPluginServerInitCallback();                                            \
+	MatterGeneralDiagnosticsPluginServerInitCallback();                                        \
+	MatterSoftwareDiagnosticsPluginServerInitCallback();                                       \
+	MatterThreadNetworkDiagnosticsPluginServerInitCallback();                                  \
+	MatterWiFiNetworkDiagnosticsPluginServerInitCallback();                                    \
+	MatterAdministratorCommissioningPluginServerInitCallback();                                \
+	MatterOperationalCredentialsPluginServerInitCallback();                                    \
+	MatterGroupKeyManagementPluginServerInitCallback();                                        \
 	MatterIcdManagementPluginServerInitCallback();
