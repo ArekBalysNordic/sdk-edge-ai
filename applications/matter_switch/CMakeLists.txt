@@ -27,7 +27,8 @@ set(MATTER_EDGEAI_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../matter_common)
 
 target_include_directories(app PRIVATE
   src
-  src/nrf_edgeai_generated
+  src/models/kws/nrf_edgeai_generated
+  src/models/wakeword/nrf_edgeai_generated
   src/switch
   src/edgeAI
   ${MATTER_EDGEAI_COMMON_DIR}
