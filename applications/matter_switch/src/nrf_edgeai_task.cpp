@@ -188,16 +188,16 @@ void switch_thread_fn()
 			case KEYWORD_SCENE_ONE: {
 				SystemLayer().ScheduleLambda([] {
 					LOG_INF("Scene 1");
-					Nrf::Matter::GetSwitch().SetBrightness(50);
-					Nrf::Matter::GetSwitch().SetColorTemperature(15);
+					Nrf::Matter::GetSwitch().SetBrightness(100);
+					Nrf::Matter::GetSwitch().SetColor(0);
 				});
 				break;
 			}
 			case KEYWORD_SCENE_TWO: {
 				SystemLayer().ScheduleLambda([] {
 					LOG_INF("Scene 2");
-					Nrf::Matter::GetSwitch().SetBrightness(100);
-					Nrf::Matter::GetSwitch().SetColorTemperature(20);
+					Nrf::Matter::GetSwitch().SetBrightness(200);
+					Nrf::Matter::GetSwitch().SetColor(170);
 				});
 				break;
 			}
@@ -205,7 +205,7 @@ void switch_thread_fn()
 				SystemLayer().ScheduleLambda([] {
 					LOG_INF("Scene 3");
 					Nrf::Matter::GetSwitch().SetBrightness(175);
-					Nrf::Matter::GetSwitch().SetColorTemperature(30);
+					Nrf::Matter::GetSwitch().SetColorTemperature(16);
 				});
 				break;
 			}
@@ -213,7 +213,7 @@ void switch_thread_fn()
 				SystemLayer().ScheduleLambda([] {
 					LOG_INF("Scene 4");
 					Nrf::Matter::GetSwitch().SetBrightness(254);
-					Nrf::Matter::GetSwitch().SetColorTemperature(254);
+					Nrf::Matter::GetSwitch().SetColorTemperature(45);
 				});
 				break;
 			}
