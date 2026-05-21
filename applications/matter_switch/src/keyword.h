@@ -40,11 +40,15 @@ typedef struct {
 } keyword_phrase_ctx_t;
 
 typedef enum keyword_labels_e {
-	KEYWORD_OFF = 0,
-	KEYWORD_ON = 1,
-	KEYWORD_OTHER = 2,
-	KEYWORD_SILENCE = 3,
-	KEYWORD_SWITCH = 4,
+	KEYWORD_LIGHT_OFF = 0,
+	KEYWORD_LIGHT_ON = 1,
+	KEYWORD_LIGHT_SWITCH = 2,
+	KEYWORD_OTHER = 3,
+	KEYWORD_SCENE_FOUR = 4,
+	KEYWORD_SCENE_ONE = 5,
+	KEYWORD_SCENE_THREE = 6,
+	KEYWORD_SCENE_TWO = 7,
+	KEYWORD_SILENCE = 8,
 	KEYWORDS_cnt
 } keyword_labels_t;
 
