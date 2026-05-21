@@ -7,6 +7,7 @@
 #include "light_switch.h"
 #include "binding/binding_handler.h"
 #include "nrf_edgeai_task.h"
+#include <cstdint>
 
 #ifdef CONFIG_SWITCH_SHELL
 #include "shell_commands.h"
@@ -77,6 +78,17 @@ void LightSwitch::SetColorTemperature(uint8_t value)
 	data->CommandId = Clusters::ColorControl::Commands::MoveToColorTemperature::Id;
 	data->InvokeCommandFunc = SwitchChangedHandler;
 	data->Value = value;
+	Nrf::Matter::BindingHandler::RunBoundClusterAction(data);
+}
+
+void LightSwitch::SetColor(uint8_t hue)
+{
+	auto *data = Platform::New<Nrf::Matter::BindingHandler::BindingData>();
+	data->EndpointId = GetSwitchEndpointId();
+	data->ClusterId = Clusters::ColorControl::Id;
+	data->CommandId = Clusters::ColorControl::Commands::MoveToHue::Id;
+	data->InvokeCommandFunc = SwitchChangedHandler;
+	data->Value = hue;
 	Nrf::Matter::BindingHandler::RunBoundClusterAction(data);
 }
 
@@ -330,6 +342,22 @@ void LightSwitch::ColorControlProcessCommand(CommandId commandId,
 		Clusters::ColorControl::Commands::MoveToColorTemperature::Type cmd;
 		/* Workaround in order not to change the binding data in ncs */
 		cmd.colorTemperatureMireds = bindingData.Value << 3;
+		if (device) {
+			ret = Controller::InvokeCommandRequest(
+				device->GetExchangeManager(), device->GetSecureSession().Value(),
+				binding.remote, cmd, onSuccess, onFailure);
+
+		} else {
+			Messaging::ExchangeManager &exchangeMgr =
+				Server::GetInstance().GetExchangeManager();
+			ret = Controller::InvokeGroupCommandRequest(
+				&exchangeMgr, binding.fabricIndex, binding.groupId, cmd);
+		}
+		break;
+	}
+	case Clusters::ColorControl::Commands::MoveToHue::Id: {
+		Clusters::ColorControl::Commands::MoveToHue::Type cmd;
+		cmd.hue = bindingData.Value;
 		if (device) {
 			ret = Controller::InvokeCommandRequest(
 				device->GetExchangeManager(), device->GetSecureSession().Value(),

@@ -71,6 +71,10 @@ void GenericSwitch::SetColorTemperature(uint8_t value)
 	// Use long press handler for color changes
 	LongPressHandler();
 }
+void GenericSwitch::SetColor(uint8_t hue)
+{
+	LongPressHandler();
+}
 
 void GenericSwitch::InitialPressHandler()
 {

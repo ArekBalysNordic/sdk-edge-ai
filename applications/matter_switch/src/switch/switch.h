@@ -56,6 +56,8 @@ class Switch
 
 	virtual void SetColorTemperature(uint8_t value) = 0;
 
+	virtual void SetColor(uint8_t hue) = 0;
+
 	chip::EndpointId GetSwitchEndpointId()
 	{
 		return sSwitchEndpoint;

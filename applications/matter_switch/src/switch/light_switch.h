@@ -30,6 +30,7 @@ class LightSwitch : public Switch
 	void DimmerChangeBrightness() override;
 	void SetBrightness(uint8_t level) override;
 	void SetColorTemperature(uint8_t value) override;
+	void SetColor(uint8_t hue) override;
 
       private:
 	static void OnOffProcessCommand(chip::CommandId commandId,
