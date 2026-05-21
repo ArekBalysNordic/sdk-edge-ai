@@ -15,7 +15,7 @@
 #include "wakeword.h"
 #include "models/wakeword/nrf_edgeai_generated/nrf_edgeai_user_model.h"
 
-LOG_MODULE_REGISTER(ww);
+LOG_MODULE_DECLARE(ww, CONFIG_CHIP_APP_LOG_LEVEL);
 
 static nrf_edgeai_t *ww_model;
 
@@ -96,7 +96,16 @@ int ww_process(uint8_t *const audio_buffer, const uint16_t num_samples, bool *co
 		LOG_ERR("Failed to run inference (err %d)", err);
 		return -EPERM;
 	}
+#ifdef CONFIG_DETAILED_MODEL_LOGS
+	uint16_t predicted_class = ww_model->decoded_output.classif.predicted_class;
+	size_t num_classes = ww_model->decoded_output.classif.num_classes;
+	// Get probability depending on model quantization: f32, q16, q8. Here is an example for f32
+	// model
+	const flt32_t *p_probabilities = ww_model->decoded_output.classif.probabilities.p_f32;
 
+	flt32_t prob = p_probabilities[predicted_class];
+	LOG_INF("%u with probability %f", predicted_class, p_probabilities[predicted_class]);
+#endif
 	*ww_detected = ww_postprocess();
 
 	return 0;

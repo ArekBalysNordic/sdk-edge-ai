@@ -6,7 +6,7 @@
 
 config MATTER_EDGEAI_DMIC_MEM_SLAB_NUM_BLOCKS
 	int "DMIC PCM memory slab block count"
-	range 4 24
+	range 4 32
 	default 8
 	help
 	  Number of RX blocks for the Zephyr DMIC driver mem slab (matter_common dmic).

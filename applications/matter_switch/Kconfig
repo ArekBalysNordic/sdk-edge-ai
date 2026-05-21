@@ -26,6 +26,13 @@ config GENERIC_SWITCH
 
 endchoice
 
+config DETAILED_MODEL_LOGS
+	bool "Prints live probabilities"
+	default n
+	help
+	  Prints all the output probabilities of the model for easier debugging.
+
+
 config SWITCH_ENDPOINT_ID
 	int "Switch Endpoint ID"
 	default 1

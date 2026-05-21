@@ -18,11 +18,17 @@
 LOG_MODULE_DECLARE(kw, CONFIG_CHIP_APP_LOG_LEVEL);
 
 const keyword_class_cfg_t KEYWORD_CLASSES_CFG[] = {
-	[KEYWORD_OFF] = {.name = "OFF", .count_needed = 2, .threshold_percent = 0},
-	[KEYWORD_ON] = {.name = "ON", .count_needed = 2, .threshold_percent = 0},
+	[KEYWORD_LIGHT_OFF] = {.name = "LIGHT_OFF", .count_needed = 2, .threshold_percent = 20},
+	[KEYWORD_LIGHT_ON] = {.name = "LIGHT_ON", .count_needed = 2, .threshold_percent = 30},
+	[KEYWORD_LIGHT_SWITCH] = {.name = "LIGHT_SWITCH",
+				  .count_needed = 2,
+				  .threshold_percent = 20},
 	[KEYWORD_OTHER] = {.name = "OTHER", .count_needed = 4, .threshold_percent = 0},
+	[KEYWORD_SCENE_FOUR] = {.name = "SCENE_FOUR", .count_needed = 2, .threshold_percent = 20},
+	[KEYWORD_SCENE_ONE] = {.name = "SCENE_ONE", .count_needed = 2, .threshold_percent = 20},
+	[KEYWORD_SCENE_THREE] = {.name = "SCENE_THREE", .count_needed = 2, .threshold_percent = 20},
+	[KEYWORD_SCENE_TWO] = {.name = "SCENE_TWO", .count_needed = 2, .threshold_percent = 20},
 	[KEYWORD_SILENCE] = {.name = "SILENCE", .count_needed = 4, .threshold_percent = 0},
-	[KEYWORD_SWITCH] = {.name = "SWITCH", .count_needed = 2, .threshold_percent = 0},
 };
 
 static nrf_edgeai_t *kw_model;
@@ -84,7 +90,27 @@ int kw_process(uint8_t *const audio_buffer, const uint16_t num_samples, uint16_t
 		LOG_ERR("Failed to run inference (err %d)", err);
 		return -EPERM;
 	}
-	// return 1;
+
+#ifdef CONFIG_DETAILED_MODEL_LOGS
+	uint16_t predicted_class = kw_model->decoded_output.classif.predicted_class;
+	size_t num_classes = kw_model->decoded_output.classif.num_classes;
+	// Get probability depending on model quantization: f32, q16, q8. Here is an example for f32
+	// model
+	const float *p_probabilities = kw_model->decoded_output.classif.probabilities.p_f32;
+
+	float prob = p_probabilities[predicted_class];
+	if (predicted_class != KEYWORD_SILENCE) {
+		LOG_INF("kws probs [");
+		for (size_t i = 0; i < num_classes; i++) {
+			const keyword_class_cfg_t *p_class_cfg = get_keyword_class_cfg(i);
+			LOG_INF("%u (%s) with probability %f", i, p_class_cfg->name,
+				p_probabilities[i]);
+		}
+		LOG_INF("]");
+	}
+
+#endif
+
 	/* KWS model may have more output classes (e.g. 12) than this app enum (KEYWORDS_cnt). */
 	const uint16_t raw_class = kw_model->decoded_output.classif.predicted_class;
 	const uint16_t n_out = nrf_edgeai_model_outputs_num(kw_model);
@@ -135,15 +161,16 @@ static bool is_keyword_command_component(uint16_t predicted_class)
 
 static bool is_keyword_phrase_first_word(uint16_t predicted_class)
 {
-	return (predicted_class == KEYWORD_ON) || (predicted_class == KEYWORD_OFF) ||
-	       (predicted_class == KEYWORD_SWITCH);
+	return (predicted_class == KEYWORD_LIGHT_OFF) || (predicted_class == KEYWORD_LIGHT_ON) ||
+	       (predicted_class == KEYWORD_LIGHT_SWITCH) || (predicted_class == KEYWORD_OTHER) ||
+	       (predicted_class == KEYWORD_SCENE_FOUR) || (predicted_class == KEYWORD_SCENE_ONE) ||
+	       (predicted_class == KEYWORD_SCENE_THREE) || (predicted_class == KEYWORD_SCENE_TWO) ||
+	       (predicted_class == KEYWORD_SILENCE);
 }
 
 static const keyword_class_cfg_t *get_keyword_class_cfg(uint16_t predicted_class)
 {
-	if (predicted_class >= KEYWORDS_cnt) {
-		return &KEYWORD_CLASSES_CFG[KEYWORD_OTHER];
-	}
+	__ASSERT(predicted_class < KEYWORDS_cnt, "Invalid keyword class: %u", predicted_class);
 	return &KEYWORD_CLASSES_CFG[predicted_class];
 }
 
