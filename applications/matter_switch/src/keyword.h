@@ -39,16 +39,19 @@ typedef struct {
 	uint32_t detected_at_ms;
 } keyword_phrase_ctx_t;
 
+/* Indices must match the KWS model output classes (see scripts/kws_live_plot.py). */
 typedef enum keyword_labels_e {
-	KEYWORD_LIGHT_OFF = 0,
-	KEYWORD_LIGHT_ON = 1,
-	KEYWORD_LIGHT_SWITCH = 2,
+	KEYWORD_LIGHT = 0,
+	KEYWORD_OFF = 1,
+	KEYWORD_ON = 2,
 	KEYWORD_OTHER = 3,
 	KEYWORD_SCENE_FOUR = 4,
 	KEYWORD_SCENE_ONE = 5,
 	KEYWORD_SCENE_THREE = 6,
 	KEYWORD_SCENE_TWO = 7,
 	KEYWORD_SILENCE = 8,
+	KEYWORD_TOGGLE_LIGHT = 9,
+
 	KEYWORDS_cnt
 } keyword_labels_t;
 

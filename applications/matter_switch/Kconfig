@@ -28,7 +28,6 @@ endchoice
 
 config DETAILED_MODEL_LOGS
 	bool "Prints live probabilities"
-	default n
 	help
 	  Prints all the output probabilities of the model for easier debugging.
 
