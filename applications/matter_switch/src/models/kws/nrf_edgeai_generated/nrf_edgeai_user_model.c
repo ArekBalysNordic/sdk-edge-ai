@@ -8,7 +8,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /* Nordic EdgeAI Lab Solution ID and Runtime Version */
 #define EDGEAI_LAB_SOLUTION_ID_STR      "11323"
-#define EDGEAI_RUNTIME_VERSION_COMBINED 0x00000202
+#define EDGEAI_RUNTIME_VERSION_COMBINED 0x00000002
 
 //////////////////////////////////////////////////////////////////////////////
 #define INPUT_TYPE i16
@@ -60,7 +60,7 @@ static const nrf_user_input_t INPUT_FEATURES_SCALE_MAX[] = { 32767 };
 //////////////////////////////////////////////////////////////////////////////
 #define MODEL_TYPE        __NRF_EDGEAI_MODEL_AXON
 #define MODEL_TASK        0
-#define MODEL_OUTPUTS_NUM 9
+#define MODEL_OUTPUTS_NUM 10
 
 #define MODEL_USES_AS_INPUT_INPUT_FEATURES 0
 #define MODEL_USES_AS_INPUT_DSP_FEATURES   1
@@ -71,7 +71,7 @@ static const nrf_user_input_t INPUT_FEATURES_SCALE_MAX[] = { 32767 };
 #include <drivers/axon/nrf_axon_nn_infer.h>
 #include <axon/nrf_axon_platform.h>
 #include "nrf_edgeai_user_model_axon.h"
-#define P_MODEL_INSTANCE &model_stream_state_internal_int8_26
+#define P_MODEL_INSTANCE &model_stream_state_internal_int8_30
 #else  // MODEL_TYPE == __NRF_EDGEAI_MODEL_NEUTON
 #define P_MODEL_INSTANCE &model_neuton_user_instance_
 #endif

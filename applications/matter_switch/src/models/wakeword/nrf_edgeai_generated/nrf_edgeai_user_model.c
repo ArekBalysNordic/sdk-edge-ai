@@ -1,4 +1,4 @@
-/* 2026-05-18T13:25:25.213377 */
+/* 2026-04-16T17:53:16.832913 */
 /*
 * Copyright (c) 2026 Nordic Semiconductor ASA
 * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
@@ -7,11 +7,10 @@
 #include "nrf_edgeai_user_types.h"
 #include <nrf_edgeai/nrf_edgeai_platform.h>
 #include <nrf_edgeai/rt/private/nrf_edgeai_interfaces.h>
-#include <assert.h>
 
 //////////////////////////////////////////////////////////////////////////////
 /* Nordic EdgeAI Lab Solution ID and Runtime Version */
-#define EDGEAI_LAB_SOLUTION_ID_STR      "1111"
+#define EDGEAI_LAB_SOLUTION_ID_STR      "92556"
 #define EDGEAI_RUNTIME_VERSION_COMBINED 0x00000202
 
 //////////////////////////////////////////////////////////////////////////////
@@ -75,7 +74,7 @@ static const nrf_user_input_t INPUT_FEATURES_SCALE_MAX[] = {
 #include <drivers/axon/nrf_axon_nn_infer.h>  
 #include <axon/nrf_axon_platform.h> 
 #include "nrf_edgeai_user_model_axon.h" 
-#define P_MODEL_INSTANCE &model_axon_user_instance_1111
+#define P_MODEL_INSTANCE &model_axon_user_instance_92556
 #else  // MODEL_TYPE == __NRF_EDGEAI_MODEL_NEUTON
 #define P_MODEL_INSTANCE &model_neuton_user_instance_ 
 #endif
@@ -248,14 +247,14 @@ static nrf_edgeai_t nrf_edgeai_ = {
 
 //////////////////////////////////////////////////////////////////////////////
 
-nrf_edgeai_t* nrf_edgeai_user_model_1111(void)
+nrf_edgeai_t* nrf_edgeai_user_model_ww(void)
 {
     return &nrf_edgeai_;
 }
 
 //////////////////////////////////////////////////////////////////////////////
     
-uint32_t nrf_edgeai_user_model_neuton_size_1111(void)
+uint32_t nrf_edgeai_user_model_neuton_size_ww(void)
 {
     uint32_t model_meta_size = 0;
 #if MODEL_TYPE == __NRF_EDGEAI_MODEL_NEUTON

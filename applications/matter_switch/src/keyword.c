@@ -18,17 +18,18 @@
 LOG_MODULE_DECLARE(kw, CONFIG_CHIP_APP_LOG_LEVEL);
 
 const keyword_class_cfg_t KEYWORD_CLASSES_CFG[] = {
-	[KEYWORD_LIGHT_OFF] = {.name = "LIGHT_OFF", .count_needed = 2, .threshold_percent = 20},
-	[KEYWORD_LIGHT_ON] = {.name = "LIGHT_ON", .count_needed = 2, .threshold_percent = 30},
-	[KEYWORD_LIGHT_SWITCH] = {.name = "LIGHT_SWITCH",
-				  .count_needed = 2,
-				  .threshold_percent = 20},
+	[KEYWORD_LIGHT] = {.name = "LIGHT", .count_needed = 2, .threshold_percent = 0},
+	[KEYWORD_OFF] = {.name = "OFF", .count_needed = 2, .threshold_percent = 20},
+	[KEYWORD_ON] = {.name = "ON", .count_needed = 2, .threshold_percent = 20},
 	[KEYWORD_OTHER] = {.name = "OTHER", .count_needed = 4, .threshold_percent = 0},
-	[KEYWORD_SCENE_FOUR] = {.name = "SCENE_FOUR", .count_needed = 2, .threshold_percent = 20},
-	[KEYWORD_SCENE_ONE] = {.name = "SCENE_ONE", .count_needed = 2, .threshold_percent = 20},
-	[KEYWORD_SCENE_THREE] = {.name = "SCENE_THREE", .count_needed = 2, .threshold_percent = 20},
-	[KEYWORD_SCENE_TWO] = {.name = "SCENE_TWO", .count_needed = 2, .threshold_percent = 20},
+	[KEYWORD_SCENE_FOUR] = {.name = "SCENE_FOUR", .count_needed = 2, .threshold_percent = 0},
+	[KEYWORD_SCENE_ONE] = {.name = "SCENE_ONE", .count_needed = 2, .threshold_percent = 0},
+	[KEYWORD_SCENE_THREE] = {.name = "SCENE_THREE", .count_needed = 2, .threshold_percent = 0},
+	[KEYWORD_SCENE_TWO] = {.name = "SCENE_TWO", .count_needed = 2, .threshold_percent = 0},
 	[KEYWORD_SILENCE] = {.name = "SILENCE", .count_needed = 4, .threshold_percent = 0},
+	[KEYWORD_TOGGLE_LIGHT] = {.name = "TOGGLE_LIGHT",
+				  .count_needed = 2,
+				  .threshold_percent = 0},
 };
 
 static nrf_edgeai_t *kw_model;
@@ -159,13 +160,11 @@ static bool is_keyword_command_component(uint16_t predicted_class)
 	       (predicted_class != KEYWORD_SILENCE);
 }
 
-static bool is_keyword_phrase_first_word(uint16_t predicted_class)
+static bool is_keyword_actionable(uint16_t predicted_class)
 {
-	return (predicted_class == KEYWORD_LIGHT_OFF) || (predicted_class == KEYWORD_LIGHT_ON) ||
-	       (predicted_class == KEYWORD_LIGHT_SWITCH) || (predicted_class == KEYWORD_OTHER) ||
-	       (predicted_class == KEYWORD_SCENE_FOUR) || (predicted_class == KEYWORD_SCENE_ONE) ||
+	return (predicted_class == KEYWORD_SCENE_FOUR) || (predicted_class == KEYWORD_SCENE_ONE) ||
 	       (predicted_class == KEYWORD_SCENE_THREE) || (predicted_class == KEYWORD_SCENE_TWO) ||
-	       (predicted_class == KEYWORD_SILENCE);
+	       (predicted_class == KEYWORD_TOGGLE_LIGHT);
 }
 
 static const keyword_class_cfg_t *get_keyword_class_cfg(uint16_t predicted_class)
@@ -288,7 +287,7 @@ static bool try_detect_keyword_command(uint16_t predicted_class, flt32_t probabi
 	s_keyword_runtime_ctx.blocked_class = predicted_class;
 
 	/* `count_needed` is consecutive stable frames of this class, not a second spoken word. */
-	if (is_keyword_phrase_first_word(predicted_class)) {
+	if (is_keyword_actionable(predicted_class)) {
 		unsigned avg_pct = (unsigned)(detected_probability * 100.0f + 0.5f);
 
 		if (avg_pct > 100U) {

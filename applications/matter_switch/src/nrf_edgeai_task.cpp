@@ -161,23 +161,7 @@ void switch_thread_fn()
 				break;
 			}
 			switch (class_detected) {
-			case KEYWORD_LIGHT_OFF: {
-				SystemLayer().ScheduleLambda([] {
-					LOG_INF("Turning light off");
-					Nrf::Matter::GetSwitch().InitiateActionSwitch(
-						::Switch::Action::Off);
-				});
-				break;
-			}
-			case KEYWORD_LIGHT_ON: {
-				SystemLayer().ScheduleLambda([] {
-					LOG_INF("Turning light on");
-					Nrf::Matter::GetSwitch().InitiateActionSwitch(
-						::Switch::Action::On);
-				});
-				break;
-			}
-			case KEYWORD_LIGHT_SWITCH: {
+			case KEYWORD_TOGGLE_LIGHT: {
 				SystemLayer().ScheduleLambda([] {
 					LOG_INF("Toggling the light");
 					Nrf::Matter::GetSwitch().InitiateActionSwitch(
