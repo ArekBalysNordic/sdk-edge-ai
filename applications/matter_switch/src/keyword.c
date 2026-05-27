@@ -39,7 +39,7 @@ static keyword_phrase_ctx_t s_keyword_phrase_ctx;
 
 static void reset_keyword_detection_state(void);
 static bool is_keyword_command_component(uint16_t predicted_class);
-static bool is_keyword_phrase_first_word(uint16_t predicted_class);
+static bool is_keyword_actionable(uint16_t predicted_class);
 static const keyword_class_cfg_t *get_keyword_class_cfg(uint16_t predicted_class);
 static bool is_keyword_probability_above_threshold(uint16_t predicted_class, float probability);
 static bool try_detect_keyword_command(uint16_t predicted_class, float probability,
