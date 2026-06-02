@@ -2,13 +2,17 @@
 """
 Commission Matter switch/bulb and configure unicast binding.
 
-Flow:
+Flow (default):
 1) Validate OTBR container is running and has an active dataset.
 2) Optionally restart SRP server in OTBR.
 3) Commission light switch (default node id: 1) over BLE-Thread.
 4) Unless --switch-only: commission light bulb (default node id: 2) via code-thread
    (--bulb-pin) or BLE-Thread with PAA trust store.
 5) Configure ACL on bulb and binding entries on switch (always, including --switch-only).
+
+Flow (--bind-only):
+1) Require explicit --switch-node-id and --bulb-node-id (no commissioning).
+2) Configure ACL on bulb and binding entries on switch only.
 """
 
 from __future__ import annotations
@@ -41,8 +45,18 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_PAA_ROOT_PATH,
         help=f"Path to PAA trust store directory for bulb commissioning (default: {DEFAULT_PAA_ROOT_PATH})",
     )
-    parser.add_argument("--switch-node-id", type=int, default=1)
-    parser.add_argument("--bulb-node-id", type=int, default=2)
+    parser.add_argument(
+        "--switch-node-id",
+        type=int,
+        default=None,
+        help="Switch node id (default: 1; required with --bind-only).",
+    )
+    parser.add_argument(
+        "--bulb-node-id",
+        type=int,
+        default=None,
+        help="Bulb node id (default: 2; required with --bind-only).",
+    )
     parser.add_argument("--switch-passcode", default="20202021")
     parser.add_argument(
         "--bulb-pin",
@@ -67,7 +81,26 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Commission only the light switch, then re-apply ACL and binding (bulb must already be on fabric).",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--bind-only",
+        action="store_true",
+        help="Skip commissioning; only write ACL and binding (requires --switch-node-id and --bulb-node-id).",
+    )
+    args = parser.parse_args()
+
+    if args.bind_only and args.switch_only:
+        parser.error("--bind-only cannot be used with --switch-only")
+
+    if args.bind_only:
+        if args.switch_node_id is None or args.bulb_node_id is None:
+            parser.error("--bind-only requires both --switch-node-id and --bulb-node-id")
+    else:
+        if args.switch_node_id is None:
+            args.switch_node_id = 1
+        if args.bulb_node_id is None:
+            args.bulb_node_id = 2
+
+    return args
 
 
 def run_cmd(command: list[str], description: str) -> subprocess.CompletedProcess[str]:
@@ -256,7 +289,7 @@ def main() -> int:
         print(f"Error: chip-tool not found at '{args.chiptool_path}'.", file=sys.stderr)
         return 1
 
-    if not args.switch_only and not args.paa_root_path.is_dir():
+    if not args.bind_only and not args.switch_only and not args.paa_root_path.is_dir():
         print(f"Error: PAA root path '{args.paa_root_path}' does not exist or is not a directory.", file=sys.stderr)
         return 1
 
@@ -265,44 +298,53 @@ def main() -> int:
         return 1
 
     try:
-        dataset = check_otbr_running_and_get_dataset(args.otbr_docker_name)
-        print("[OK] OTBR is running and active Thread dataset is available.")
-
-        if not args.skip_srp_restart:
-            restart_srp(args.otbr_docker_name)
-
-        commission_ble_thread(
-            chiptool_path=args.chiptool_path,
-            node_id=args.switch_node_id,
-            dataset_hex=dataset,
-            passcode=args.switch_passcode,
-            discriminator=args.switch_discriminator,
-            ble_controller=args.ble_controller,
-            commissioner_name=args.commissioner_name,
-        )
-
-        if not args.switch_only:
-            commission_code_thread(
+        if args.bind_only:
+            write_acl_and_binding(
                 chiptool_path=args.chiptool_path,
-                node_id=args.bulb_node_id,
-                dataset_hex=dataset,
-                setup_code=args.bulb_pin,
+                switch_node_id=args.switch_node_id,
+                bulb_node_id=args.bulb_node_id,
                 commissioner_name=args.commissioner_name,
-                paa_root_path=args.paa_root_path,
+            )
+        else:
+            dataset = check_otbr_running_and_get_dataset(args.otbr_docker_name)
+            print("[OK] OTBR is running and active Thread dataset is available.")
+
+            if not args.skip_srp_restart:
+                restart_srp(args.otbr_docker_name)
+
+            commission_ble_thread(
+                chiptool_path=args.chiptool_path,
+                node_id=args.switch_node_id,
+                dataset_hex=dataset,
+                passcode=args.switch_passcode,
+                discriminator=args.switch_discriminator,
+                ble_controller=args.ble_controller,
+                commissioner_name=args.commissioner_name,
             )
 
+            if not args.switch_only:
+                commission_code_thread(
+                    chiptool_path=args.chiptool_path,
+                    node_id=args.bulb_node_id,
+                    dataset_hex=dataset,
+                    setup_code=args.bulb_pin,
+                    commissioner_name=args.commissioner_name,
+                    paa_root_path=args.paa_root_path,
+                )
 
-        write_acl_and_binding(
-            chiptool_path=args.chiptool_path,
-            switch_node_id=args.switch_node_id,
-            bulb_node_id=args.bulb_node_id,
-            commissioner_name=args.commissioner_name,
-        )
+            write_acl_and_binding(
+                chiptool_path=args.chiptool_path,
+                switch_node_id=args.switch_node_id,
+                bulb_node_id=args.bulb_node_id,
+                commissioner_name=args.commissioner_name,
+            )
     except RuntimeError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
-    if args.switch_only:
+    if args.bind_only:
+        print("[DONE] ACL and binding configured (bind-only).")
+    elif args.switch_only:
         print("[DONE] Light switch commissioned; ACL and binding re-applied.")
     else:
         print("[DONE] Switch and bulb commissioned and bound successfully.")

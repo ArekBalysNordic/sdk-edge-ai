@@ -91,7 +91,7 @@ void switch_thread_fn()
 		LOG_ERR("Failed to start DMIC");
 		return;
 	}
-	nrfy_pdm_gain_set(NRF_PDM20, 0x40, 0x40);
+	nrfy_pdm_gain_set(NRF_PDM20, 0x30, 0x30);
 
 	LOG_INF("\n\nWaiting for wakeword...\n\n");
 
