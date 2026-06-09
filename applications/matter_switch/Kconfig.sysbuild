@@ -1,0 +1,26 @@
+#
+# Copyright (c) 2023 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+#### Bootloader
+choice BOOTLOADER
+	default BOOTLOADER_MCUBOOT
+endchoice
+
+#### DFU multi-image support
+config DFU_MULTI_IMAGE_PACKAGE_BUILD
+	default y
+
+config DFU_MULTI_IMAGE_PACKAGE_APP
+	default y
+
+config PM_EXTERNAL_FLASH_MCUBOOT_SECONDARY
+	default y
+
+# Disable checking the external drivers for nRF54L15 and nRF54LM20 DKs.
+config PM_OVERRIDE_EXTERNAL_DRIVER_CHECK
+	default y
+
+source "share/sysbuild/Kconfig"

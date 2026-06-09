@@ -1,8 +1,14 @@
 /*
- * Copyright (c) 2025 Nordic Semiconductor ASA
+ * Copyright (c) 2026 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
+
+/ {
+	chosen {
+		nordic,pm-ext-flash = &mx25r64;
+	};
+};
 
 &rram_controller {
 	cpuapp_rram: rram@0 {
@@ -11,10 +17,6 @@
 	};
 };
 
-/* Disable the external flash, as it's not needed
- * for the configuration with secondary slot residing
- * in the internal RRAM.
- */
 &mx25r64 {
-	status = "disabled";
+	status = "okay";
 };
