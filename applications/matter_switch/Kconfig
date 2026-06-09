@@ -108,19 +108,12 @@ endmenu
 if OPENTHREAD
 
 choice OPENTHREAD_NORDIC_LIBRARY_CONFIGURATION
-	default OPENTHREAD_NORDIC_LIBRARY_MTD
+	default OPENTHREAD_NORDIC_LIBRARY_FTD
 endchoice
 
 choice OPENTHREAD_DEVICE_TYPE
-	default OPENTHREAD_MTD
+	default OPENTHREAD_FTD
 endchoice
-
-config CHIP_ENABLE_ICD_SUPPORT
-	default y
-
-# Reduce Thread TX output power to 0 dBm for SED device
-config OPENTHREAD_DEFAULT_TX_POWER
-	default 0
 
 endif # OPENTHREAD
 
